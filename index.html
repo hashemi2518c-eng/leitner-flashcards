@@ -325,18 +325,25 @@ function counts(){
   active().forEach(function(c){var x=p[c.id];if(!x)nw++;else if(x[1]<=t)due++});
   return {due:due,nw:nw};
 }
-function plan(){var n=counts(),T=S.cfg.perDay,dn=Math.min(n.due,T),rest=T-dn,cap=S.cfg.maxNew>0?S.cfg.maxNew:rest;return {dn:dn,nn:Math.max(0,Math.min(n.nw,rest,cap))}}
+function plan(){
+  var n=counts(),dy=S.prog.day,t=today(),used=(dy&&dy.date===t)?dy.ids.length:0,nu=(dy&&dy.date===t)?(dy.newN||0):0;
+  var T=Math.max(0,S.cfg.perDay-used),dn=Math.min(n.due,T),rest=T-dn,cap=S.cfg.maxNew>0?Math.max(0,S.cfg.maxNew-nu):rest;
+  return {dn:dn,nn:Math.max(0,Math.min(n.nw,rest,cap)),left:T}
+}
 function boxCounts(){var b=[0,0,0,0,0],p=S.prog.p;active().forEach(function(c){var x=p[c.id];if(x)b[x[0]-1]++});return b}
 function restoreSession(){var s=S.prog.session;if(s&&s.date===today()&&s.ids)S.idx=Math.min(s.i||0,s.ids.length)}
 function resetSession(){S.prog.session=null;if(!S.prog.day||!S.prog.day.rounds)S.prog.day=null;S.idx=0;S.show=false;saveDoc("progress",S.prog)}
-function startSession(){
+function startSession(force){
   var s=S.prog.session,t=today();
-  if(!(s&&s.date===t&&s.ids&&s.ids.length)){
+  if(force===true||!(s&&s.date===t&&s.ids&&s.ids.length)){
     var p=S.prog.p,due=[],nw=[];
     active().forEach(function(c){var x=p[c.id];if(!x)nw.push(c);else if(x[1]<=t)due.push([x[0],x[1],c])});
     due.sort(function(a,b){return a[0]-b[0]||(a[1]<b[1]?-1:1)});
     var pl=plan(),ids=due.slice(0,pl.dn).map(function(x){return x[2].id}).concat(nw.slice(0,pl.nn).map(function(c){return c.id}));
-    S.prog.session={date:t,round:1,ids:ids,i:0};S.prog.day={date:t,ids:ids.slice(),rounds:0,last:{}};S.idx=0;
+    var od=S.prog.day,more=od&&od.date===t&&od.rounds>0,nn0=nw.slice(0,pl.nn).length;
+    S.prog.session={date:t,round:more?od.rounds+1:1,ids:ids,i:0};
+    S.prog.day=more?{date:t,ids:od.ids.concat(ids),rounds:od.rounds,last:od.last||{},newN:(od.newN||0)+nn0}:{date:t,ids:ids.slice(),rounds:0,last:{},newN:nn0};
+    S.idx=0;
     saveDoc("progress",S.prog);
   }
   S.show=false;S.phase="card";render();autoFront();
@@ -415,7 +422,8 @@ function renderPractice(){
   if(finished){
     h+='<p class="muted">دوره '+fa(dr)+' از '+fa(R)+' تمام شد · '+fa(s.ids.length)+' کارت.'+(s.rep?'':' فردا کارت‌های سخت اول می‌آیند.')+'</p>';
     if(dr<R)h+='<p><button class="btn go" id="again" style="width:100%">دوره '+fa(dr+1)+': مرور مجدد کارت‌های امروز</button></p><p class="muted">اول کارت‌هایی که سخت بودند می‌آیند. هر مرور جعبه را به‌روز می‌کند، ولی هر کارت در یک روز فقط یک جعبه بالا می‌رود.</p>';
-    else h+='<p class="muted">همه‌ی دوره‌های امروز انجام شد. برای دوره‌ی بیشتر، «تعداد دوره در روز» را در تنظیمات زیاد کن.</p>';
+    if(nd+nn>0)h+='<p><button class="btn" id="nextb" style="width:100%">دسته‌ی بعدی: '+fa(nd)+' مرور و '+fa(nn)+' کارت جدید</button></p>';
+    if(dr>=R)h+='<p class="muted">همه‌ی دوره‌های امروز انجام شد. برای دوره‌ی بیشتر، «تعداد دوره در روز» را در تنظیمات زیاد کن.</p>';
   }
   var td=(S.prog.days||{})[t];
   if(td&&td.n){
@@ -438,6 +446,7 @@ function renderPractice(){
   app.innerHTML=h;
   var b=document.getElementById("start");if(b)b.onclick=startSession;
   var ag=document.getElementById("again");if(ag)ag.onclick=startRepeat;
+  var nb=document.getElementById("nextb");if(nb)nb.onclick=function(){startSession(true)};
   var rb=document.getElementById("rebuild");if(rb)rb.onclick=function(){resetSession();renderPractice()};
   [].forEach.call(app.querySelectorAll("[data-f]"),function(el){el.onclick=function(){
     var f=S.prog.filter||[],k=el.dataset.f;
@@ -448,7 +457,7 @@ function renderPractice(){
 
 function renderSetup(){
   var d=S.draft||(S.draft=JSON.parse(JSON.stringify(S.cfg))),h="";
-  h+='<div class="panel"><h2>تعداد روزانه</h2><div class="grid2"><div><label class="f" for="np">تعداد کل کارت در روز</label><input type="number" id="np" min="1" max="200" value="'+S.cfg.perDay+'"></div><div><label class="f" for="rp">سقف کارت جدید (۰ = بدون سقف)</label><input type="number" id="rp" min="0" max="200" value="'+S.cfg.maxNew+'"></div></div><div style="margin-top:12px"><label class="f" for="rd">تعداد دوره در روز (هر دوره یک بار مرور کامل کارت‌های امروز)</label><input type="number" id="rd" min="1" max="10" value="'+(S.cfg.rounds||1)+'"></div><p class="muted" style="margin-top:8px">اول کارت‌های مرورِ سررسیدشده می‌آیند و بقیه‌ی تعداد کل با کارت جدید پر می‌شود.</p>';
+  h+='<div class="panel"><h2>تعداد روزانه</h2><div class="grid2"><div><label class="f" for="np">تعداد کل کارت در روز</label><input type="number" id="np" min="1" max="200" value="'+S.cfg.perDay+'"></div><div><label class="f" for="rp">سقف کارت جدید در روز (۰ = بقیه‌ی تعداد کل با جدید پر شود)</label><input type="number" id="rp" min="0" max="200" value="'+S.cfg.maxNew+'"></div></div><div style="margin-top:12px"><label class="f" for="rd">تعداد دوره در روز (هر دوره یک بار مرور کامل کارت‌های امروز)</label><input type="number" id="rd" min="1" max="10" value="'+(S.cfg.rounds||1)+'"></div><p class="muted" style="margin-top:8px">اول کارت‌های مرورِ سررسیدشده می‌آیند و بقیه‌ی تعداد کل با کارت جدید پر می‌شود.</p>';
   h+='<label class="tabhead" style="margin-top:12px"><input type="checkbox" id="as"'+(S.cfg.autoSpeak?" checked":"")+'><span>پخش خودکار تلفظ</span></label><label class="tabhead" style="margin-top:8px"><input type="checkbox" id="ss"'+(S.cfg.sheetSync!==false?" checked":"")+'><span>ذخیره‌ی جعبه‌ها و تاریخچه در خود Google Sheet (تب‌های Leitner_Box و Leitner_Log)</span></label><p class="muted" style="margin-top:8px">تعداد با تغییر همین‌جا اعمال می‌شود و تمرین امروزِ شروع‌نشده دوباره ساخته می‌شود.</p></div>';
   d.sources.forEach(function(s,i){
     h+='<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">'+esc(s.name||("منبع "+fa(i+1)))+'</h2><button class="btn sm" data-rm="'+i+'">حذف</button></div>';
