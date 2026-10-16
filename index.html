@@ -372,13 +372,8 @@ function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak
 function answer(known){
   var s=S.prog.session,id=s.ids[S.idx],x=S.prog.p[id],box,c=byId(id);
   var td=today(),base=x?(x[2]===td?x[3]:x[0]):0;
-  if(s.early){
-    if(known)box=x?x[0]:1;
-    else{box=1;S.prog.p[id]=[1,addDays(td,1),td,x?(x[2]===td?x[3]:x[0]):0]}
-  }else{
-    box=known?(base?Math.min(5,base+1):2):1;
-    S.prog.p[id]=[box,addDays(td,known?INT[box]:1),td,base];
-  }
+  box=known?(base?Math.min(5,base+1):2):1;
+  S.prog.p[id]=[box,addDays(td,known?INT[box]:1),td,base];
   var dy=S.prog.day;if(dy&&dy.date===s.date){(dy.last||(dy.last={}))[id]=known?1:0}
   if(c)addLog(c,known,box,s.early?2:s.rep,s.early?0:(s.round||1));
   S.idx++;s.i=S.idx;S.show=false;
@@ -448,7 +443,7 @@ function renderPractice(){
   }
   if(!finished)h+=(td&&td.n?'<div class="lab" style="margin-top:14px">دسته‌ی بعدی</div>':'')+'<div class="stats"><div class="stat"><b>'+fa(nd)+'</b><span class="muted">مرور سررسید</span></div><div class="stat"><b>'+fa(nn)+'</b><span class="muted">کارت جدید</span></div></div>';
   var el=earlyList().length;
-  if(el)h+='<p style="margin-top:14px"><button class="btn" id="early" style="width:100%">مرور جعبه‌ها همین حالا · '+fa(el)+' کارت</button></p><p class="muted">کارت‌هایی که قبلاً یاد گرفته‌ای ولی هنوز موعدشان نرسیده؛ جعبه‌های پایین‌تر اول. «بلد بودم» جعبه را عوض نمی‌کند و «سخت بود» کارت را به جعبه‌ی ۱ برمی‌گرداند.</p>';
+  if(el)h+='<p style="margin-top:14px"><button class="btn" id="early" style="width:100%">مرور جعبه‌ها همین حالا · '+fa(el)+' کارت</button></p><p class="muted">کارت‌هایی که قبلاً یاد گرفته‌ای ولی هنوز موعدشان نرسیده؛ جعبه‌های پایین‌تر اول. «بلد بودم» کارت را یک جعبه بالا می‌برد (حداکثر یک بار در روز) و «سخت بود» به جعبه‌ی ۱ برمی‌گرداند.</p>';
   var tabs=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(tb){if(tb.on)tabs.push(tb)})});
   if(tabs.length>1){
     var f=S.prog.filter||[];
