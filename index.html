@@ -417,14 +417,19 @@ function renderPractice(){
     if(dr<R)h+='<p><button class="btn go" id="again" style="width:100%">دوره '+fa(dr+1)+': مرور مجدد کارت‌های امروز</button></p><p class="muted">اول کارت‌هایی که سخت بودند می‌آیند. هر مرور جعبه را به‌روز می‌کند، ولی هر کارت در یک روز فقط یک جعبه بالا می‌رود.</p>';
     else h+='<p class="muted">همه‌ی دوره‌های امروز انجام شد. برای دوره‌ی بیشتر، «تعداد دوره در روز» را در تنظیمات زیاد کن.</p>';
   }
-  else h+='<div class="stats"><div class="stat"><b>'+fa(nd)+'</b><span class="muted">مرور</span></div><div class="stat"><b>'+fa(nn)+'</b><span class="muted">جدید</span></div></div>';
+  var td=(S.prog.days||{})[t];
+  if(td&&td.n){
+    h+='<div class="stats" style="grid-template-columns:repeat(3,1fr)"><div class="stat"><b>'+fa(td.n)+'</b><span class="muted">مرور شده امروز</span></div><div class="stat"><b>'+fa(td.k)+'</b><span class="muted">بلد</span></div><div class="stat"><b>'+fa(td.h)+'</b><span class="muted">سخت</span></div></div>';
+    h+='<p class="muted" style="margin:8px 0 0">دوره‌های انجام‌شده امروز: '+fa(dr)+' از '+fa(R)+'</p>';
+  }
+  if(!finished)h+=(td&&td.n?'<div class="lab" style="margin-top:14px">دسته‌ی بعدی</div>':'')+'<div class="stats"><div class="stat"><b>'+fa(nd)+'</b><span class="muted">مرور سررسید</span></div><div class="stat"><b>'+fa(nn)+'</b><span class="muted">کارت جدید</span></div></div>';
+  else if(td&&td.n)h+='';
   var tabs=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(tb){if(tb.on)tabs.push(tb)})});
   if(tabs.length>1){
     var f=S.prog.filter||[];
     h+='<div class="lab">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه</button>'+tabs.map(function(tb){return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+'</button>'}).join("")+'</div>';
   }
   var total=nd+nn,resume=s&&s.date===t&&S.idx>0&&S.idx<(s.ids||[]).length;
-  if(!finished&&dr>0&&!resume&&!(s&&s.rep&&s.date===t))h+='<p class="muted">امروز '+fa(dr)+' دوره انجام شده.</p>';
   if(!finished)h+=(total||resume)?'<button class="btn go" id="start" style="width:100%">'+(resume?'ادامه تمرین':'شروع تمرین')+'</button>':'<p class="muted">امروز کارتی برای مرور نیست.</p>';
   if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
   var bc=boxCounts(),mx=Math.max.apply(null,bc.concat([1])),days=[1,2,4,7,14];
