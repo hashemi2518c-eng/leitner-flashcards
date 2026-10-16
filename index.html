@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Leitner Flashcards</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1a3269">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Vazirmatn:wght@400;500&display=swap">
+<style>
+/* Layout: brand header with logo, then one working column. Practice shows a card with its heading, structure and answer; Setup maps sheet columns. */
+:root{
+  --navy:#1a3269; --navy-2:#0d214f; --green:#436659; --orange:#f7891b;
+  --bg:#F2F4F8; --surface:#FFFFFF; --ink:#16203A; --ink2:#586279; --line:#DAE0EA;
+  --acc:#436659; --on-acc:#FFFFFF; --acc-soft:#E3EEE9; --acc-ink:#2F5144;
+  --hard-soft:#FDEEDC; --hard-ink:#A4590A; --hard-line:#F2B77A;
+  --err-soft:#FBE9E7; --err-ink:#B3382C;
+  --bar1:#C9D3E6; --bar2:#9DB0D3; --bar3:#6F89BC; --bar4:#43609F; --bar5:#1a3269;
+  --font-fa:'Vazirmatn','Yekan Bakh',system-ui,sans-serif; --font-en:'Poppins',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1222; --surface:#151E35; --ink:#E8ECF4; --ink2:#9AA5BA; --line:#27324D;
+  --acc:#6C9E8B; --on-acc:#0B1220; --acc-soft:#17302A; --acc-ink:#9ACDB8;
+  --hard-soft:#3A2A14; --hard-ink:#F6B26B; --hard-line:#7A4F1A;
+  --err-soft:#3B1E1B; --err-ink:#F0877C;
+  --bar1:#2A3858; --bar2:#34487A; --bar3:#42609F; --bar4:#5A7BC0; --bar5:#86A3DC; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1222; --surface:#151E35; --ink:#E8ECF4; --ink2:#9AA5BA; --line:#27324D;
+  --acc:#6C9E8B; --on-acc:#0B1220; --acc-soft:#17302A; --acc-ink:#9ACDB8;
+  --hard-soft:#3A2A14; --hard-ink:#F6B26B; --hard-line:#7A4F1A;
+  --err-soft:#3B1E1B; --err-ink:#F0877C;
+  --bar1:#2A3858; --bar2:#34487A; --bar3:#42609F; --bar4:#5A7BC0; --bar5:#86A3DC; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-fa);font-size:15px;line-height:1.7;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:520px;margin:0 auto}
+.bar{background:var(--navy);color:#fff;margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px))) 16px;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--orange)}
+.logo{width:56px;height:56px;flex:none;display:block}
+.ttl{flex:1;min-width:0}
+.bar h1{font-size:17px;font-weight:500;margin:0;line-height:1.4}
+.bar small{display:block;font-family:var(--font-en);font-size:11px;opacity:.75;letter-spacing:.02em}
+.nav{display:flex;gap:6px;flex:none}
+.chip{min-height:44px;min-width:44px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:#fff;border-color:#fff;color:var(--navy);font-weight:500}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.panel h2{font-size:16px;font-weight:500;margin:0 0 8px}
+.muted{color:var(--ink2);font-size:13px;margin:0}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row>*{min-width:0}
+button,select,input{font:inherit;color:inherit}
+.btn{min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.go{background:var(--acc);border-color:var(--acc);color:var(--on-acc);font-weight:500}
+.btn.hard{background:var(--hard-soft);border-color:var(--hard-line);color:var(--hard-ink)}
+.btn.known{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-ink)}
+.btn.sm{min-height:44px;padding:0 14px;font-size:13px}
+.btn:focus-visible,input:focus-visible,select:focus-visible,.chip:focus-visible,.fil:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+input[type=text],input[type=number],select{min-height:44px;width:100%;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc);flex:none}
+label.f{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.ltr{direction:ltr;text-align:left;font-family:var(--font-en)}
+.tab{display:grid;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.tabhead{display:flex;gap:10px;align-items:center}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.stat{background:var(--bg);border-radius:8px;padding:12px}
+.stat b{display:block;font-size:26px;font-weight:500;line-height:1.2;font-variant-numeric:tabular-nums}
+.boxes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:end;margin:14px 0 4px}
+.bx{text-align:center;font-size:11px;color:var(--ink2)}
+.bx i{display:block;border-radius:4px 4px 0 0;min-height:4px;margin:0 auto 4px;width:100%}
+.bx b{display:block;font-size:14px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.fils{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+.fil{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:13px}
+.fil[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.prog i{display:block;height:100%;background:var(--orange);transition:width .25s}
+.card{padding:0;overflow:hidden}
+.ch{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--bg)}
+.tag{font-size:12px;border-radius:6px;padding:0 10px;background:var(--navy);color:#fff;line-height:24px}
+.tag.cat{background:var(--acc-soft);color:var(--acc-ink)}
+.tag.box{background:transparent;border:1px solid var(--line);color:var(--ink2);margin-inline-start:auto}
+.cb{padding:20px 16px;display:grid;gap:14px;text-align:center}
+.cb.ex{text-align:start}
+.q{font-size:22px;font-weight:500;line-height:1.45;overflow-wrap:anywhere;font-family:var(--font-en)}
+.cb.ex .q{font-size:17px}
+.lab{font-size:11px;letter-spacing:.04em;color:var(--ink2);text-transform:uppercase;font-family:var(--font-en)}
+.blk{border-radius:8px;padding:12px;background:var(--bg);text-align:start;overflow-wrap:anywhere;white-space:pre-wrap}
+.blk.ans{background:var(--acc-soft);color:var(--acc-ink)}
+.ans.en{font-family:var(--font-en);font-size:15px;line-height:1.7}
+.back{font-size:20px;overflow-wrap:anywhere}
+.msg{padding:12px;border-radius:8px;background:var(--err-soft);color:var(--err-ink);font-size:14px;margin-bottom:16px}
+.msg.ok{background:var(--acc-soft);color:var(--acc-ink)}
+.msg a{color:inherit;font-weight:500;text-decoration:underline}
+svg.ic{width:18px;height:18px;flex:none}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+.hrow{display:flex;gap:10px;align-items:center;justify-content:space-between;width:100%;text-align:start;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font:inherit;cursor:pointer;margin-top:8px}
+.hrow small{color:var(--ink2)}
+.le{display:flex;gap:8px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line)}
+.le time{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums;flex:none}
+.le .ok{color:var(--acc-ink)}.le .no{color:var(--hard-ink)}
+.rh{font-size:13px;color:var(--ink2);margin:12px 0 2px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="bar">
+    <img class="logo" alt="HashemolHosseini" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNDIzIDE0MDEiIHdpZHRoPSIzNTUiIGhlaWdodD0iMzUwIj48dGl0bGU+bG9nby1wZXJzaWFuIHdoaXRlICh0cmFjZWQgZnJvbSBzdXBwbGllZCBQTkcpPC90aXRsZT48cmVjdCB3aWR0aD0iMTQyMyIgaGVpZ2h0PSIxNDAxIiBmaWxsPSIjMWEzMjY5Ii8+PHBhdGggZmlsbD0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNOTguNSAxMzIyLjAgTDE0Ni41IDEzNzAuNSBMMTk0LjUgMTMyMi41IEwxOTUuNSAxMzIyLjUgTDI0My4wIDEzNzAuNSBMMjkxLjUgMTMyMi41IEwyNDMuNSAxMjc0LjUgTDE5NS41IDEzMjIuMCBMMTQ2LjAgMTI3NC41WiBNMTM1Ny4wIDExOTguMCBMMTM1Ni41IDEyNTAuNSBMMTM3MS41IDEyNTAuNSBMMTM3MS41IDExOTguNVogTTEyNTAuMCAxMTk4LjAgTDEyNDkuNSAxMjUwLjUgTDEyNjQuNSAxMjUwLjUgTDEyNjQuNSAxMTk4LjVaIE0xMzI4LjUgMTIwMS4wIEwxMzIzLjUgMTE5OC4wIEwxMzE0LjAgMTE5Ny4wIEwxMzA3LjAgMTIwMC4wIEwxMzAyLjAgMTIwNi4wIEwxMzAxLjAgMTE5OC4wIEwxMjg3LjUgMTE5OC41IEwxMjg3LjUgMTI1MC41IEwxMzAyLjUgMTI1MC41IEwxMzAyLjUgMTIxNy41IEwxMzA0LjUgMTIxMi4wIEwxMzA3LjAgMTIwOS41IEwxMzEwLjUgMTIwOC41IEwxMzE1LjAgMTIxMC4wIEwxMzE3LjUgMTIxNC41IEwxMzE3LjUgMTI1MC4wIEwxMzMzLjAgMTI1MC4wIEwxMzMyLjUgMTIwOS41IEwxMzMxLjUgMTIwNS41WiBNMTIwMS41IDExOTcuMCBMMTE5MC41IDEyMDEuMCBMMTE4My4wIDEyMDkuMCBMMTE4MC4wIDEyMTYuNSBMMTE4MC4wIDEyMzMuMCBMMTE4NC4wIDEyNDEuNSBMMTE5MS41IDEyNDguNSBMMTIwMC4wIDEyNTEuNSBMMTIxMC4wIDEyNTEuNSBMMTIyMC4wIDEyNDcuNSBMMTIyNi41IDEyNDAuMCBMMTIyOC41IDEyMzQuMCBMMTIxNS4wIDEyMzMuMCBMMTIxNC4wIDEyMzYuNSBMMTIxMS41IDEyMzkuNSBMMTIwOC41IDEyNDEuMCBMMTIwMy41IDEyNDEuMCBMMTE5Ny4wIDEyMzYuNSBMMTE5NS41IDEyMzMuMCBMMTE5NS41IDEyMjcuNSBMMTE5Ni41IDEyMjYuNSBMMTIyOS41IDEyMjYuNSBMMTIyOC41IDEyMTYuMCBMMTIyNS4wIDEyMDcuNSBMMTIyMC4wIDEyMDIuMCBMMTIxMi41IDExOTguMFogTTExOTUuNSAxMjE1LjUgTDExOTcuNSAxMjEwLjUgTDExOTkuNSAxMjA4LjUgTDEyMDMuMCAxMjA3LjAgTDEyMDcuNSAxMjA3LjAgTDEyMTMuMCAxMjExLjAgTDEyMTQuNSAxMjE3LjUgTDExOTYuMCAxMjE4LjBaIE0xMTMxLjUgMTE5OC4wIEwxMTI0LjAgMTIwMi4wIEwxMTIwLjAgMTIwNy4wIEwxMTE4LjUgMTIxMi41IEwxMTIwLjAgMTIyMS41IEwxMTIzLjAgMTIyNS41IEwxMTI4LjUgMTIyOC41IEwxMTQ4LjAgMTIzMi41IEwxMTUwLjUgMTIzNS41IEwxMTUwLjAgMTIzOC41IEwxMTQ2LjUgMTI0MS4wIEwxMTM3LjUgMTI0MS41IEwxMTMyLjUgMTIzOS41IEwxMTI5LjAgMTIzNC41IEwxMTE3LjUgMTIzNi4wIEwxMTE3LjAgMTIzOC41IEwxMTIyLjUgMTI0Ni41IEwxMTMwLjAgMTI1MC41IEwxMTM0LjUgMTI1MS41IEwxMTQ2LjAgMTI1MS41IEwxMTUwLjUgMTI1MC41IEwxMTU4LjAgMTI0Ni41IEwxMTYxLjUgMTI0Mi41IEwxMTYzLjUgMTIzNy41IEwxMTYzLjUgMTIyOS41IEwxMTYyLjUgMTIyNi41IEwxMTU4LjAgMTIyMS4wIEwxMTU0LjUgMTIxOS4wIEwxMTM0LjAgMTIxNS4wIEwxMTMyLjUgMTIxMy41IEwxMTMyLjAgMTIxMC41IEwxMTM0LjAgMTIwNy41IEwxMTM2LjUgMTIwNi41IEwxMTQzLjUgMTIwNi41IEwxMTQ2LjAgMTIwNy41IEwxMTQ5LjUgMTIxMS4wIEwxMTUwLjUgMTIxMy41IEwxMTYxLjUgMTIxMC4wIEwxMTU4LjUgMTIwNC41IEwxMTUyLjAgMTE5OS4wIEwxMTQ0LjAgMTE5Ny4wWiBNMTA3MS41IDExOTguMCBMMTA2NC4wIDEyMDIuMCBMMTA2MC4wIDEyMDcuMCBMMTA1OC41IDEyMTIuNSBMMTA2MC4wIDEyMjEuNSBMMTA2My4wIDEyMjUuNSBMMTA2OC41IDEyMjguNSBMMTA4OC4wIDEyMzIuNSBMMTA5MC41IDEyMzUuNSBMMTA5MC4wIDEyMzguNSBMMTA4Ni41IDEyNDEuMCBMMTA3Ny41IDEyNDEuNSBMMTA3Mi41IDEyMzkuNSBMMTA2OS4wIDEyMzQuNSBMMTA1Ny41IDEyMzYuMCBMMTA1Ny4wIDEyMzguNSBMMTA2Mi41IDEyNDYuNSBMMTA3MC4wIDEyNTAuNSBMMTA3NC41IDEyNTEuNSBMMTA4Ni4wIDEyNTEuNSBMMTA5MC41IDEyNTAuNSBMMTA5OC4wIDEyNDYuNSBMMTEwMS41IDEyNDIuNSBMMTEwMy41IDEyMzcuNSBMMTEwMy41IDEyMjkuNSBMMTEwMi41IDEyMjYuNSBMMTA5OC4wIDEyMjEuMCBMMTA5NC41IDEyMTkuMCBMMTA3NC4wIDEyMTUuMCBMMTA3Mi41IDEyMTMuNSBMMTA3Mi4wIDEyMTAuNSBMMTA3NC4wIDEyMDcuNSBMMTA3Ni41IDEyMDYuNSBMMTA4My41IDEyMDYuNSBMMTA4Ni4wIDEyMDcuNSBMMTA4OS41IDEyMTEuMCBMMTA5MC41IDEyMTMuNSBMMTEwMS41IDEyMTAuMCBMMTA5OC41IDEyMDQuNSBMMTA5Mi4wIDExOTkuMCBMMTA4NC4wIDExOTcuMFogTTEwMTMuNSAxMTk3LjAgTDEwMDQuNSAxMjAwLjAgTDEwMDEuMCAxMjAyLjUgTDk5Ni4wIDEyMDguNSBMOTkyLjUgMTIxOS41IEw5OTMuMCAxMjMyLjUgTDk5OC4wIDEyNDMuMCBMMTAwNC4wIDEyNDguNSBMMTAxMi4wIDEyNTEuNSBMMTAyMi4wIDEyNTEuNSBMMTAyNi4wIDEyNTAuNSBMMTAzMy4wIDEyNDYuNSBMMTAzOS41IDEyMzguNSBMMTA0Mi41IDEyMjguNSBMMTA0Mi41IDEyMjAuNSBMMTAzOC41IDEyMDguNSBMMTAzMy4wIDEyMDIuMCBMMTAyNS41IDExOTguMFogTTEwMTUuNSAxMjA3LjAgTDEwMjEuMCAxMjA3LjUgTDEwMjQuMCAxMjEwLjAgTDEwMjYuMCAxMjE1LjAgTDEwMjYuNSAxMjI5LjAgTDEwMjUuMCAxMjM2LjUgTDEwMjIuNSAxMjQwLjAgTDEwMTguNSAxMjQyLjAgTDEwMTMuNSAxMjQxLjAgTDEwMTAuNSAxMjM4LjAgTDEwMDguNSAxMjMxLjUgTDEwMDguNSAxMjE2LjUgTDEwMDkuNSAxMjEyLjUgTDEwMTMuNSAxMjA3LjVaIE04MjkuNSAxMTk3LjAgTDgyMC41IDEyMDAuMCBMODE3LjAgMTIwMi41IEw4MTIuMCAxMjA4LjUgTDgwOC41IDEyMTkuNSBMODA5LjAgMTIzMi41IEw4MTQuMCAxMjQzLjAgTDgyMC4wIDEyNDguNSBMODI4LjAgMTI1MS41IEw4MzguMCAxMjUxLjUgTDg0Mi4wIDEyNTAuNSBMODQ5LjAgMTI0Ni41IEw4NTUuNSAxMjM4LjUgTDg1OC41IDEyMjguNSBMODU4LjUgMTIyMC41IEw4NTQuNSAxMjA4LjUgTDg0OS4wIDEyMDIuMCBMODQxLjUgMTE5OC4wWiBNODMxLjUgMTIwNy4wIEw4MzcuMCAxMjA3LjUgTDg0MC4wIDEyMTAuMCBMODQyLjAgMTIxNS4wIEw4NDIuNSAxMjI5LjAgTDg0MS4wIDEyMzYuNSBMODM4LjUgMTI0MC4wIEw4MzQuNSAxMjQyLjAgTDgyOS41IDEyNDEuMCBMODI2LjUgMTIzOC4wIEw4MjQuNSAxMjMxLjUgTDgyNC41IDEyMTYuNSBMODI1LjUgMTIxMi41IEw4MjkuNSAxMjA3LjVaIE03MTMuNSAxMTk4LjUgTDcxMy41IDEyNTAuNSBMNzI4LjAgMTI1MC41IEw3MjguNSAxMjE0LjUgTDczMS4wIDEyMTAuNSBMNzM0LjUgMTIwOS4wIEw3MzkuNSAxMjA5LjUgTDc0My4wIDEyMTMuNSBMNzQzLjUgMTI1MC41IEw3NTguNSAxMjUwLjAgTDc1OC41IDEyMTUuNSBMNzU5LjUgMTIxMi41IEw3NjUuMCAxMjA5LjAgTDc3MC41IDEyMTAuMCBMNzczLjAgMTIxMy41IEw3NzMuMCAxMjUwLjAgTDc4OC41IDEyNTAuMCBMNzg4LjUgMTIxMy4wIEw3ODcuMCAxMjA1LjAgTDc4My4wIDEyMDAuMCBMNzc1LjAgMTE5Ny4wIEw3NjcuNSAxMTk3LjUgTDc2Mi4wIDEyMDAuMCBMNzU3LjAgMTIwNS41IEw3NTEuMCAxMTk5LjAgTDc0NS4wIDExOTcuMCBMNzQwLjAgMTE5Ny4wIEw3MzMuMCAxMTk5LjUgTDcyOC4wIDEyMDUuMCBMNzI3LjAgMTE5OC4wWiBNNjY1LjUgMTE5Ny4wIEw2NTQuNSAxMjAxLjAgTDY0Ny4wIDEyMDkuMCBMNjQ0LjAgMTIxNi41IEw2NDQuMCAxMjMzLjAgTDY0OC4wIDEyNDEuNSBMNjU1LjUgMTI0OC41IEw2NjQuMCAxMjUxLjUgTDY3NC4wIDEyNTEuNSBMNjg0LjAgMTI0Ny41IEw2OTAuNSAxMjQwLjAgTDY5Mi41IDEyMzQuMCBMNjc5LjAgMTIzMy4wIEw2NzguMCAxMjM2LjUgTDY3NS41IDEyMzkuNSBMNjcyLjUgMTI0MS4wIEw2NjcuNSAxMjQxLjAgTDY2MS4wIDEyMzYuNSBMNjU5LjUgMTIzMy4wIEw2NTkuNSAxMjI3LjUgTDY2MC41IDEyMjYuNSBMNjkzLjUgMTIyNi41IEw2OTIuNSAxMjE2LjAgTDY4OS4wIDEyMDcuNSBMNjg0LjAgMTIwMi4wIEw2NzYuNSAxMTk4LjBaIE02NTkuNSAxMjE1LjUgTDY2MS41IDEyMTAuNSBMNjYzLjUgMTIwOC41IEw2NjcuMCAxMjA3LjAgTDY3MS41IDEyMDcuMCBMNjc3LjAgMTIxMS4wIEw2NzguNSAxMjE3LjUgTDY2MC4wIDEyMTguMFogTTUyNy41IDExOTguMCBMNTIwLjAgMTIwMi4wIEw1MTYuMCAxMjA3LjAgTDUxNC41IDEyMTIuNSBMNTE2LjAgMTIyMS41IEw1MTkuMCAxMjI1LjUgTDUyNC41IDEyMjguNSBMNTQ0LjAgMTIzMi41IEw1NDYuNSAxMjM1LjUgTDU0Ni4wIDEyMzguNSBMNTQyLjUgMTI0MS4wIEw1MzMuNSAxMjQxLjUgTDUyOC41IDEyMzkuNSBMNTI1LjAgMTIzNC41IEw1MTMuNSAxMjM2LjAgTDUxMy4wIDEyMzguNSBMNTE4LjUgMTI0Ni41IEw1MjYuMCAxMjUwLjUgTDUzMC41IDEyNTEuNSBMNTQyLjAgMTI1MS41IEw1NDYuNSAxMjUwLjUgTDU1NC4wIDEyNDYuNSBMNTU3LjUgMTI0Mi41IEw1NTkuNSAxMjM3LjUgTDU1OS41IDEyMjkuNSBMNTU4LjUgMTIyNi41IEw1NTQuMCAxMjIxLjAgTDU1MC41IDEyMTkuMCBMNTMwLjAgMTIxNS4wIEw1MjguNSAxMjEzLjUgTDUyOC4wIDEyMTAuNSBMNTMwLjAgMTIwNy41IEw1MzIuNSAxMjA2LjUgTDUzOS41IDEyMDYuNSBMNTQyLjAgMTIwNy41IEw1NDUuNSAxMjExLjAgTDU0Ni41IDEyMTMuNSBMNTU3LjUgMTIxMC4wIEw1NTQuNSAxMjA0LjUgTDU0OC4wIDExOTkuMCBMNTQwLjAgMTE5Ny4wWiBNNDU2LjAgMTIwMi4wIEw0NTEuMCAxMjA4LjUgTDQ1MC4wIDEyMTEuMCBMNDUwLjUgMTIxMy41IEw0NjMuNSAxMjE0LjUgTDQ2NS4wIDEyMTAuNSBMNDY4LjUgMTIwNy41IEw0NzUuNSAxMjA3LjAgTDQ4MC4wIDEyMTAuMCBMNDgxLjAgMTIxNy41IEw0NjMuNSAxMjIwLjAgTDQ1NC41IDEyMjQuMCBMNDUwLjAgMTIyOS4wIEw0NDguMCAxMjM1LjUgTDQ0OC41IDEyNDEuMCBMNDUwLjUgMTI0NS41IEw0NTMuNSAxMjQ4LjUgTDQ1OC41IDEyNTEuMCBMNDY5LjAgMTI1MS41IEw0NzYuMCAxMjQ4LjUgTDQ4MS4wIDEyNDMuMCBMNDgyLjAgMTI0NC4wIEw0ODIuNSAxMjUwLjUgTDQ5Ni41IDEyNTAuNSBMNDk1LjUgMTIwNy41IEw0OTMuNSAxMjA0LjAgTDQ4Ny4wIDExOTkuMCBMNDc4LjAgMTE5Ny4wIEw0NjUuMCAxMTk4LjBaIE00ODAuNSAxMjI1LjUgTDQ4MS4wIDEyMzMuMCBMNDc4LjAgMTIzOS4wIEw0NzQuMCAxMjQyLjAgTDQ3MS4wIDEyNDIuNSBMNDY3LjUgMTI0MS41IEw0NjUuMCAxMjM5LjAgTDQ2NC4wIDEyMzUuNSBMNDY1LjUgMTIzMS4wIEw0NzIuNSAxMjI2LjVaIE05MTcuMCAxMTgwLjAgTDkxNy4wIDEyNTAuNSBMOTMzLjAgMTI1MC41IEw5MzMuMCAxMjIyLjUgTDkzNC41IDEyMjEuMCBMOTU1LjAgMTIyMS4wIEw5NTYuMCAxMjIyLjAgTDk1Ni4wIDEyNTAuNSBMOTcxLjUgMTI1MC41IEw5NzIuMCAxMTgwLjUgTDk3MS4wIDExNzkuNSBMOTU2LjAgMTE4MC4wIEw5NTYuMCAxMjA2LjUgTDk1NS4wIDEyMDcuNSBMOTM0LjAgMTIwNy41IEw5MzMuMCAxMjA2LjAgTDkzMy4wIDExODAuMFogTTg3OS41IDExNzkuNSBMODc4LjUgMTE4MC4wIEw4NzguNSAxMjUwLjUgTDg5My41IDEyNTAuNSBMODkzLjUgMTE4MC4wWiBNNTc4LjUgMTE4MC4wIEw1NzguNSAxMjUwLjUgTDU5My4wIDEyNTAuNSBMNTkzLjUgMTIxNS4wIEw1OTcuMCAxMjEwLjUgTDYwMC4wIDEyMDkuMCBMNjA1LjAgMTIwOS41IEw2MDguMCAxMjEzLjUgTDYwOC4wIDEyNTAuMCBMNjIzLjAgMTI1MC41IEw2MjMuNSAxMjEyLjUgTDYyMS4wIDEyMDMuNSBMNjE5LjAgMTIwMS4wIEw2MTQuMCAxMTk4LjAgTDYwNS4wIDExOTcuMCBMNTk5LjAgMTE5OS4wIEw1OTMuNSAxMjA0LjAgTDU5My4wIDExODAuMFogTTM3My4wIDExODAuMCBMMzczLjAgMTI1MC41IEwzODkuMCAxMjUwLjUgTDM4OS4wIDEyMjIuNSBMMzkwLjUgMTIyMS4wIEw0MTEuMCAxMjIxLjAgTDQxMi4wIDEyMjIuMCBMNDEyLjAgMTI1MC41IEw0MjcuNSAxMjUwLjUgTDQyOC4wIDExODAuNSBMNDI3LjAgMTE3OS41IEw0MTIuMCAxMTgwLjAgTDQxMi4wIDEyMDYuNSBMNDExLjAgMTIwNy41IEwzOTAuMCAxMjA3LjUgTDM4OS4wIDEyMDYuMCBMMzg5LjAgMTE4MC4wWiBNMTM1Ny4wIDExNzguMCBMMTM1Ni41IDExOTMuMCBMMTM3MS4wIDExOTMuNSBMMTM3MS41IDExNzguNVogTTEyNTAuMCAxMTc4LjAgTDEyNDkuNSAxMTkzLjAgTDEyNjQuMCAxMTkzLjUgTDEyNjQuNSAxMTc4LjVaIE0xMTE4LjUgMTA5MS4wIEwxMTE4LjUgMTEwMS41IEwxMTM4LjUgMTEwMS41IEwxMTM5LjAgMTEwMi41IEwxMTE2LjAgMTEzMi41IEwxMTE2LjAgMTE0My41IEwxMTU3LjAgMTE0My41IEwxMTU3LjUgMTEzMy41IEwxMTU2LjUgMTEzMi41IEwxMTMzLjUgMTEzMi4wIEwxMTU2LjUgMTEwMC4wIEwxMTU2LjAgMTA5MS4wWiBNMTE4MC4wIDEwOTUuMCBMMTE3NS4wIDExMDEuNSBMMTE3NC4wIDExMDQuMCBMMTE3NC41IDExMDYuNSBMMTE4Ny41IDExMDcuNSBMMTE4OS4wIDExMDMuNSBMMTE5Mi41IDExMDAuNSBMMTE5OS41IDExMDAuMCBMMTIwNC4wIDExMDMuMCBMMTIwNS4wIDExMTAuNSBMMTE4Ny41IDExMTMuMCBMMTE3OC41IDExMTcuMCBMMTE3NC4wIDExMjIuMCBMMTE3Mi4wIDExMjguNSBMMTE3Mi41IDExMzQuMCBMMTE3NC41IDExMzguNSBMMTE3Ny41IDExNDEuNSBMMTE4Mi41IDExNDQuMCBMMTE5My4wIDExNDQuNSBMMTIwMC4wIDExNDEuNSBMMTIwNS4wIDExMzYuMCBMMTIwNi4wIDExMzcuMCBMMTIwNi41IDExNDMuNSBMMTIyMC41IDExNDMuNSBMMTIxOS41IDExMDAuNSBMMTIxNy41IDEwOTcuMCBMMTIxMS4wIDEwOTIuMCBMMTIwMi4wIDEwOTAuMCBMMTE4OS4wIDEwOTEuMFogTTEyMDQuNSAxMTE4LjUgTDEyMDUuMCAxMTI2LjAgTDEyMDIuMCAxMTMyLjAgTDExOTguMCAxMTM1LjAgTDExOTUuMCAxMTM1LjUgTDExOTEuNSAxMTM0LjUgTDExODkuMCAxMTMyLjAgTDExODguMCAxMTI4LjUgTDExODkuNSAxMTI0LjAgTDExOTYuNSAxMTE5LjVaIE0xMDcyLjUgMTA5MC4wIEwxMDYxLjUgMTA5NC4wIEwxMDU0LjAgMTEwMi4wIEwxMDUxLjAgMTEwOS41IEwxMDUxLjAgMTEyNi4wIEwxMDU1LjAgMTEzNC41IEwxMDYyLjUgMTE0MS41IEwxMDcxLjAgMTE0NC41IEwxMDgxLjAgMTE0NC41IEwxMDkxLjAgMTE0MC41IEwxMDk3LjUgMTEzMy4wIEwxMDk5LjUgMTEyNy4wIEwxMDg2LjAgMTEyNi4wIEwxMDg1LjAgMTEyOS41IEwxMDgyLjUgMTEzMi41IEwxMDc5LjUgMTEzNC4wIEwxMDc0LjUgMTEzNC4wIEwxMDY4LjAgMTEyOS41IEwxMDY2LjUgMTEyNi4wIEwxMDY2LjUgMTEyMC41IEwxMDY3LjUgMTExOS41IEwxMTAwLjUgMTExOS41IEwxMDk5LjUgMTEwOS4wIEwxMDk2LjAgMTEwMC41IEwxMDkxLjAgMTA5NS4wIEwxMDgzLjUgMTA5MS4wWiBNMTA2Ni41IDExMDguNSBMMTA2OC41IDExMDMuNSBMMTA3MC41IDExMDEuNSBMMTA3NC4wIDExMDAuMCBMMTA3OC41IDExMDAuMCBMMTA4NC4wIDExMDQuMCBMMTA4NS41IDExMTAuNSBMMTA2Ny4wIDExMTEuMFogTTEwMzQuMCAxMDkwLjAgTDEwMjcuMCAxMDkxLjAgTDEwMjMuMCAxMDk1LjAgTDEwMjEuNSAxMDk4LjUgTDEwMjAuNSAxMDk4LjAgTDEwMjAuMCAxMDkxLjAgTDEwMDYuNSAxMDkxLjUgTDEwMDYuNSAxMTQzLjUgTDEwMjEuMCAxMTQzLjUgTDEwMjEuNSAxMTE1LjUgTDEwMjIuNSAxMTEyLjAgTDEwMjYuNSAxMTA3LjAgTDEwMjkuNSAxMTA1LjUgTDEwMzQuNSAxMTA1LjBaIE04NzYuMCAxMDk1LjAgTDg3MS4wIDExMDEuNSBMODcwLjAgMTEwNC4wIEw4NzAuNSAxMTA2LjUgTDg4My41IDExMDcuNSBMODg1LjAgMTEwMy41IEw4ODguNSAxMTAwLjUgTDg5NS41IDExMDAuMCBMOTAwLjAgMTEwMy4wIEw5MDEuMCAxMTEwLjUgTDg4My41IDExMTMuMCBMODc0LjUgMTExNy4wIEw4NzAuMCAxMTIyLjAgTDg2OC4wIDExMjguNSBMODY4LjUgMTEzNC4wIEw4NzAuNSAxMTM4LjUgTDg3My41IDExNDEuNSBMODc4LjUgMTE0NC4wIEw4ODkuMCAxMTQ0LjUgTDg5Ni4wIDExNDEuNSBMOTAxLjAgMTEzNi4wIEw5MDIuMCAxMTM3LjAgTDkwMi41IDExNDMuNSBMOTE2LjUgMTE0My41IEw5MTUuNSAxMTAwLjUgTDkxMy41IDEwOTcuMCBMOTA3LjAgMTA5Mi4wIEw4OTguMCAxMDkwLjAgTDg4NS4wIDEwOTEuMFogTTkwMC41IDExMTguNSBMOTAxLjAgMTEyNi4wIEw4OTguMCAxMTMyLjAgTDg5NC4wIDExMzUuMCBMODkxLjAgMTEzNS41IEw4ODcuNSAxMTM0LjUgTDg4NS4wIDExMzIuMCBMODg0LjAgMTEyOC41IEw4ODUuNSAxMTI0LjAgTDg5Mi41IDExMTkuNVogTTc3My41IDEwOTEuNSBMNzczLjUgMTE0My41IEw3ODguMCAxMTQzLjUgTDc4OC41IDExMDcuNSBMNzkxLjAgMTEwMy41IEw3OTQuNSAxMTAyLjAgTDc5OS41IDExMDIuNSBMODAzLjAgMTEwNi41IEw4MDMuNSAxMTQzLjUgTDgxOC41IDExNDMuMCBMODE4LjUgMTEwOC41IEw4MTkuNSAxMTA1LjUgTDgyNS4wIDExMDIuMCBMODMwLjUgMTEwMy4wIEw4MzMuMCAxMTA2LjUgTDgzMy4wIDExNDMuMCBMODQ4LjUgMTE0My4wIEw4NDguNSAxMTA2LjAgTDg0Ny4wIDEwOTguMCBMODQzLjAgMTA5My4wIEw4MzUuMCAxMDkwLjAgTDgyNy41IDEwOTAuNSBMODIyLjAgMTA5My4wIEw4MTcuMCAxMDk4LjUgTDgxMS4wIDEwOTIuMCBMODA1LjAgMTA5MC4wIEw4MDAuMCAxMDkwLjAgTDc5My4wIDEwOTIuNSBMNzg4LjAgMTA5OC4wIEw3ODcuMCAxMDkxLjBaIE02NzYuNSAxMDkxLjUgTDY3Ni41IDExNDMuNSBMNjkxLjAgMTE0My41IEw2OTEuNSAxMTA3LjUgTDY5NC4wIDExMDMuNSBMNjk3LjUgMTEwMi4wIEw3MDIuNSAxMTAyLjUgTDcwNi4wIDExMDYuNSBMNzA2LjUgMTE0My41IEw3MjEuNSAxMTQzLjAgTDcyMS41IDExMDguNSBMNzIyLjUgMTEwNS41IEw3MjguMCAxMTAyLjAgTDczMy41IDExMDMuMCBMNzM2LjAgMTEwNi41IEw3MzYuMCAxMTQzLjAgTDc1MS41IDExNDMuMCBMNzUxLjUgMTEwNi4wIEw3NTAuMCAxMDk4LjAgTDc0Ni4wIDEwOTMuMCBMNzM4LjAgMTA5MC4wIEw3MzAuNSAxMDkwLjUgTDcyNS4wIDEwOTMuMCBMNzIwLjAgMTA5OC41IEw3MTQuMCAxMDkyLjAgTDcwOC4wIDEwOTAuMCBMNzAzLjAgMTA5MC4wIEw2OTYuMCAxMDkyLjUgTDY5MS4wIDEwOTguMCBMNjkwLjAgMTA5MS4wWiBNNjEzLjAgMTA5NS4wIEw2MDguMCAxMTAxLjUgTDYwNy4wIDExMDQuMCBMNjA3LjUgMTEwNi41IEw2MjAuNSAxMTA3LjUgTDYyMi4wIDExMDMuNSBMNjI1LjUgMTEwMC41IEw2MzIuNSAxMTAwLjAgTDYzNy4wIDExMDMuMCBMNjM4LjAgMTExMC41IEw2MjAuNSAxMTEzLjAgTDYxMS41IDExMTcuMCBMNjA3LjAgMTEyMi4wIEw2MDUuMCAxMTI4LjUgTDYwNS41IDExMzQuMCBMNjA3LjUgMTEzOC41IEw2MTAuNSAxMTQxLjUgTDYxNS41IDExNDQuMCBMNjI2LjAgMTE0NC41IEw2MzMuMCAxMTQxLjUgTDYzOC4wIDExMzYuMCBMNjM5LjAgMTEzNy4wIEw2MzkuNSAxMTQzLjUgTDY1My41IDExNDMuNSBMNjUyLjUgMTEwMC41IEw2NTAuNSAxMDk3LjAgTDY0NC4wIDEwOTIuMCBMNjM1LjAgMTA5MC4wIEw2MjIuMCAxMDkxLjBaIE02MzcuNSAxMTE4LjUgTDYzOC4wIDExMjYuMCBMNjM1LjAgMTEzMi4wIEw2MzEuMCAxMTM1LjAgTDYyOC4wIDExMzUuNSBMNjI0LjUgMTEzNC41IEw2MjIuMCAxMTMyLjAgTDYyMS4wIDExMjguNSBMNjIyLjUgMTEyNC4wIEw2MjkuNSAxMTE5LjVaIE00OTEuNSAxMDkwLjAgTDQ4Mi41IDEwOTMuMCBMNDc5LjAgMTA5NS41IEw0NzQuMCAxMTAxLjUgTDQ3MC41IDExMTIuNSBMNDcxLjAgMTEyNS41IEw0NzYuMCAxMTM2LjAgTDQ4Mi4wIDExNDEuNSBMNDkwLjAgMTE0NC41IEw1MDAuMCAxMTQ0LjUgTDUwNC4wIDExNDMuNSBMNTExLjAgMTEzOS41IEw1MTcuNSAxMTMxLjUgTDUyMC41IDExMjEuNSBMNTIwLjUgMTExMy41IEw1MTYuNSAxMTAxLjUgTDUxMS4wIDEwOTUuMCBMNTAzLjUgMTA5MS4wWiBNNDkzLjUgMTEwMC4wIEw0OTkuMCAxMTAwLjUgTDUwMi4wIDExMDMuMCBMNTA0LjAgMTEwOC4wIEw1MDQuNSAxMTIyLjAgTDUwMy4wIDExMjkuNSBMNTAwLjUgMTEzMy4wIEw0OTYuNSAxMTM1LjAgTDQ5MS41IDExMzQuMCBMNDg4LjUgMTEzMS4wIEw0ODYuNSAxMTI0LjUgTDQ4Ni41IDExMDkuNSBMNDg3LjUgMTEwNS41IEw0OTEuNSAxMTAwLjVaIE05ODMuMCAxMDcyLjUgTDk2OS4wIDEwNzMuMCBMOTY4LjUgMTA5Ni4wIEw5NjIuMCAxMDkxLjAgTDk1My41IDEwOTAuMCBMOTQ1LjUgMTA5My4wIEw5NDAuMCAxMDk5LjUgTDkzNy4wIDExMDguNSBMOTM3LjAgMTEyNy4wIEw5NDAuMCAxMTM1LjUgTDk0Ni41IDExNDIuNSBMOTUxLjUgMTE0NC41IEw5NTguNSAxMTQ0LjUgTDk2NC4wIDExNDIuMCBMOTY5LjUgMTEzNi41IEw5NzAuMCAxMTQzLjUgTDk4NC4wIDExNDMuMCBMOTg0LjAgMTA3My41WiBNOTU5LjUgMTEwMC41IEw5NjQuNSAxMTAxLjAgTDk2Ny41IDExMDQuMCBMOTY5LjAgMTEwOC4wIEw5NjkuMCAxMTI2LjUgTDk2Ny41IDExMzAuMCBMOTYzLjAgMTEzNC4wIEw5NTguNSAxMTM0LjAgTDk1NC41IDExMzAuNSBMOTUyLjUgMTEyNS41IEw5NTIuMCAxMTE3LjUgTDk1My41IDExMDYuNSBMOTU0LjUgMTEwNC41WiBNNTQwLjUgMTA3My4wIEw1NDAuNSAxMTQzLjUgTDU1NS4wIDExNDMuNSBMNTU1LjUgMTEwOC4wIEw1NTkuMCAxMTAzLjUgTDU2Mi4wIDExMDIuMCBMNTY3LjAgMTEwMi41IEw1NzAuMCAxMTA2LjUgTDU3MC4wIDExNDMuMCBMNTg1LjAgMTE0My41IEw1ODUuNSAxMTA1LjUgTDU4My4wIDEwOTYuNSBMNTgxLjAgMTA5NC4wIEw1NzYuMCAxMDkxLjAgTDU2Ny4wIDEwOTAuMCBMNTYxLjAgMTA5Mi4wIEw1NTUuNSAxMDk3LjAgTDU1NS4wIDEwNzMuMFogTTM3My4wIDEwNzMuMCBMMzczLjAgMTE0My41IEwzODYuNSAxMTQzLjUgTDM4Ny4wIDEwODcuNSBMMzg5LjAgMTA5MS4wIEw0MDQuNSAxMTQzLjUgTDQxNi4wIDExNDMuMCBMNDMyLjUgMTA4OC4wIEw0MzMuNSAxMDg3LjUgTDQzNC4wIDExNDMuNSBMNDUwLjUgMTE0My41IEw0NTAuNSAxMDczLjAgTDQyNC41IDEwNzMuMCBMNDExLjUgMTExNC41IEw0MTAuNSAxMTE0LjAgTDM5OS4wIDEwNzMuNSBMMzk4LjAgMTA3Mi41WiBNMTQ2LjAgODM5LjAgTDk4LjUgODg3LjUgTDE0Ni41IDkzNS4wIEwxOTQuNSA4ODcuMFogTTEwNTYuNSA4MTAuMCBMMTA1Ni4wIDEwMzAuNSBMMTExMS41IDEwMzAuNSBMMTExMS41IDgxMC4wWiBNMjUzLjAgNzk1LjUgTDI1Mi41IDkyOS41IEwzMDguMCA5MzAuMCBMMzA4LjUgNzk2LjBaIE05ODYuMCA4MzEuNSBMOTMwLjUgODMxLjUgTDkzMC4wIDkwNy41IEw5MjcuMCA5MjEuNSBMOTIxLjAgOTM1LjUgTDkxMy41IDk0Ni41IEw5MDQuNSA5NTYuMCBMODg5LjAgOTY3LjAgTDg3MC4wIDk3NC4wIEw4NTEuNSA5NzYuMCBMODUwLjUgOTc1LjAgTDg2My41IDk1NC4wIEw4NzEuNSA5MzMuNSBMODc2LjUgOTEwLjAgTDg3Ny41IDg4OC41IEw4NzUuNSA4NjkuMCBMODY4LjUgODQzLjUgTDg2MC41IDgyNi41IEw4NDkuNSA4MDkuNSBMODMwLjUgNzg5LjAgTDgyMC41IDc4MS4wIEw4MDQuNSA3NzEuMCBMNzgxLjAgNzYxLjAgTDc3MC4wIDc1OC4wIEw3NTEuMCA3NTUuMCBMNzI3LjAgNzU1LjAgTDcxMi41IDc1Ny4wIEw2OTEuMCA3NjMuMCBMNjcxLjUgNzcyLjAgTDY1My41IDc4NC4wIEw2MzQuNSA4MDIuMCBMNjI1LjUgODEzLjUgTDYxNS4wIDgzMS4wIEw2MDcuMCA4NTAuNSBMNjAyLjAgODcxLjUgTDYwMC41IDg5Mi4wIEw2MDEuNSA4OTMuMCBMNjU2LjAgODkyLjUgTDY1Ni41IDg4NC4wIEw2NTkuNSA4NjkuNSBMNjY0LjUgODU2LjUgTDY3MS41IDg0NS4wIEw2NzguNSA4MzYuNSBMNjg2LjUgODI5LjAgTDY5NS41IDgyMi41IEw3MDcuMCA4MTYuNSBMNzE5LjAgODEyLjUgTDczMC41IDgxMC41IEw3NDcuNSA4MTAuNSBMNzU5LjAgODEyLjUgTDc3MS4wIDgxNi41IEw3ODkuNSA4MjcuNSBMNzk4LjAgODM1LjAgTDgwNi4wIDg0NC41IEw4MTEuMCA4NTIuMCBMODE3LjAgODY1LjAgTDgyMS41IDg4NS41IEw4MjEuNSA5MDAuNSBMODIwLjAgOTExLjAgTDgxNy4wIDkyMS4wIEw4MTEuMCA5MzQuMCBMODA1LjAgOTQzLjAgTDc5OC4wIDk1MS4wIEw3ODkuMCA5NTkuMCBMNzgwLjAgOTY1LjAgTDc2NC4wIDk3Mi4wIEw3NTEuNSA5NzUuMCBMMTc0LjUgOTc1LjUgTDE1My41IDk3Ny4wIEwxMzkuNSA5ODAuMCBMMTE1LjAgOTg5LjAgTDEwMC41IDk5Ny4wIEw5MC41IDEwMDQuMCBMODAuMCAxMDEzLjAgTDY5LjUgMTAyNC4wIEw2Mi4wIDEwMzMuNSBMNTMuMCAxMDQ4LjAgTDQ3LjAgMTA2MC41IEw0Mi4wIDEwNzQuNSBMMzcuMCAxMDk5LjUgTDM3LjAgMTEyOC4wIEw0MC4wIDExNDYuMCBMNDQuMCAxMTU5LjUgTDUzLjAgMTE4MC4wIEw2OC4wIDEyMDIuMCBMODMuNSAxMjE4LjAgTDEwNS4wIDEyMzMuNSBMMTI4LjUgMTI0NC41IEwxNDYuNSAxMjQ5LjUgTDE2Ni4wIDEyNTIuMCBMMTg0LjAgMTI1Mi4wIEwxOTguMCAxMjUwLjUgTDIyNC4wIDEyNDMuNSBMMjQ2LjUgMTIzMi41IEwyNjguMCAxMjE2LjUgTDI4MS4wIDEyMDMuMCBMMjkxLjAgMTE4OS41IEwyOTcuNSAxMTc4LjUgTDMwNS41IDExNjAuNSBMMzExLjUgMTEzNy41IEwzMTMuNSAxMTE3LjAgTDMxMy41IDEwNzIuNSBMMjU4LjAgMTA3Mi4wIEwyNTcuNSAxMTIwLjUgTDI1Ni4wIDExMzEuNSBMMjUwLjAgMTE0OS4wIEwyNDYuMCAxMTU2LjUgTDIzOC4wIDExNjcuNSBMMjIyLjAgMTE4Mi4wIEwyMTQuMCAxMTg3LjAgTDIwMi41IDExOTIuMCBMMTkyLjAgMTE5NS4wIEwxODAuNSAxMTk2LjUgTDE2OS4wIDExOTYuNSBMMTU3LjUgMTE5NS4wIEwxNDcuMCAxMTkyLjAgTDEzMi41IDExODUuMCBMMTIyLjUgMTE3OC4wIEwxMTEuMCAxMTY2LjUgTDEwMy41IDExNTYuMCBMOTYuNSAxMTQxLjAgTDkzLjUgMTEzMC4wIEw5Mi4wIDExMTQuMCBMOTIuNSAxMTA0LjAgTDk1LjUgMTA5MC4wIEwxMDIuNSAxMDczLjUgTDExMi41IDEwNTkuNSBMMTI1LjUgMTA0Ny41IEwxMzYuNSAxMDQwLjUgTDE1MS4wIDEwMzQuNSBMMTY1LjUgMTAzMS41IEw4NTYuMCAxMDMxLjUgTDg3Ni4wIDEwMjkuNSBMODk4LjUgMTAyMy41IEw5MjEuNSAxMDEyLjUgTDkzMi4wIDEwMDUuNSBMOTQ0LjAgOTk1LjUgTDk2MS41IDk3NS41IEw5NzQuNSA5NTMuMCBMOTgxLjUgOTMzLjUgTDk4NS41IDkxMi4wWiBNMTM5MS41IDYzMi41IEwxMzg4LjUgNjE2LjUgTDEzODMuNSA2MDAuNSBMMTM3Mi41IDU3OC4wIEwxMzYzLjUgNTY1LjAgTDEzNTQuNSA1NTQuNSBMMTMzMy4wIDUzNi4wIEwxMzIwLjAgNTI4LjAgTDEzMDUuMCA1MjEuMCBMMTI4MS4wIDUxNC4wIEwxMjU5LjAgNTExLjUgTDEyNDAuMCA1MTIuMCBMMTIyNy4wIDUxNC4wIEwxMjE0LjUgNTE3LjAgTDExOTYuMCA1MjQuMCBMMTE4MS4wIDUzMi4wIEwxMTY0LjUgNTQ0LjAgTDk5My4wIDcxNS4wIEw5ODYuMCA3MjAuNSBMOTcxLjAgNzI5LjAgTDk1NS4wIDczNC4wIEw5MzMuNSA3MzUuNSBMOTE3LjUgNzMzLjAgTDg5OS41IDcyNi4wIEw4OTAuMCA3MjAuMCBMODgwLjUgNzEyLjAgTDg2OS41IDY5OS4wIEw4NjMuNSA2ODguNSBMODU4LjUgNjc1LjUgTDg1NS41IDY1OC4wIEw4NTUuNSA2NDguMCBMODU3LjUgNjM0LjAgTDg2MS41IDYyMS41IEw4NjYuNSA2MTEuNSBMODc1LjUgNTk5LjAgTDg5MS41IDU4NC41IEw5MDguNSA1NzUuNSBMOTI4LjUgNTcwLjUgTDk0OC4wIDU3MC41IEw5NjUuNSA1NzQuNSBMOTgwLjUgNTgxLjUgTDk5MS4wIDU4OS4wIEwxMDE3LjAgNjE1LjAgTDEwMTguNSA2MTUuMCBMMTA1Ny4wIDU3Ni41IEwxMDU2LjUgNTc1LjAgTDEwMjYuNSA1NDYuMCBMMTAwMi41IDUzMC4wIEw5ODQuMCA1MjIuMCBMOTcwLjAgNTE4LjAgTDk1Mi4wIDUxNS4wIEw5MzMuNSA1MTQuNSBMOTA2LjUgNTE4LjAgTDg4Mi41IDUyNi4wIEw4NzAuNSA1MzIuMCBMODU2LjUgNTQxLjAgTDg0NS41IDU1MC4wIEw4MzUuMCA1NjAuNSBMODIxLjAgNTc5LjAgTDgxMy4wIDU5My41IEw4MDguMCA2MDUuNSBMODA0LjAgNjE4LjUgTDgwMS4wIDYzNC4wIEw4MDAuMCA2NjIuMCBMODAyLjAgNjc4LjAgTDgwNi4wIDY5NC4wIEw4MTIuMCA3MTAuMCBMODE3LjAgNzIwLjAgTDgyNi4wIDczNC4wIEw4MzQuMCA3NDQuMCBMODU1LjAgNzYzLjUgTDg2My41IDc2OS41IEw4ODAuMCA3NzguNSBMOTA2LjAgNzg3LjUgTDkzMC41IDc5MS4wIEw5NDYuNSA3OTEuMCBMOTYxLjAgNzg5LjUgTDk3OC4wIDc4NS41IEw5OTQuNSA3NzkuNSBMMTAxMS41IDc3MC41IEwxMDI4LjUgNzU4LjAgTDExOTkuNSA1ODcuNSBMMTIwOC4wIDU4MS4wIEwxMjE5LjUgNTc0LjUgTDEyMzguMCA1NjguNSBMMTI1NC4wIDU2Ny4wIEwxMjc0LjUgNTY5LjUgTDEyOTIuNSA1NzYuNSBMMTMwOS41IDU4OC41IEwxMzI0LjAgNjA1LjUgTDEzMjkuMCA2MTQuNSBMMTMzNC4wIDYyOC4wIEwxMzM2LjUgNjQyLjUgTDEzMzYuNSA2NTcuMCBMMTMzNS4wIDY2Ny41IEwxMzMwLjAgNjgzLjAgTDEzMjUuMCA2OTIuNSBMMTMxNy4wIDcwMy41IEwxMzAxLjAgNzE4LjAgTDEyOTEuMCA3MjQuMCBMMTI4MS41IDcyOC4wIEwxMjY1LjAgNzMyLjAgTDEyNDMuMCA3MzIuMCBMMTIyMy41IDcyNy4wIEwxMjExLjUgNzIxLjAgTDEyMDAuNSA3MTMuMCBMMTE3NS4wIDY4OC4wIEwxMTM2LjAgNzI3LjAgTDExNjUuNSA3NTYuNSBMMTE3OC41IDc2Ni4wIEwxMTk1LjUgNzc1LjUgTDEyMTQuMCA3ODIuNSBMMTIyNi4wIDc4NS41IEwxMjM4LjUgNzg3LjUgTDEyNjIuMCA3ODguMCBMMTI3Ni41IDc4Ni41IEwxMjk0LjAgNzgyLjUgTDEzMTAuMCA3NzYuNSBMMTMyMi4wIDc3MC41IEwxMzQzLjUgNzU1LjUgTDEzNjIuNSA3MzYuMCBMMTM3NS41IDcxNi41IEwxMzgxLjUgNzA0LjAgTDEzODcuNSA2ODcuMCBMMTM5MC41IDY3My41IEwxMzkyLjUgNjU1LjBaIE0xMDE2LjAgMzg3LjUgTDEwMDAuNSAzNzQuMCBMOTgzLjAgMzYzLjAgTDk2MS41IDM1NC4wIEw5NDAuNSAzNDkuMCBMOTI1LjUgMzQ3LjUgTDkxMS41IDM0Ny41IEw4OTYuNSAzNDkuMCBMODczLjAgMzU1LjAgTDg1Mi41IDM2NC4wIEw4MzkuNSAzNzIuMCBMODIzLjUgMzg1LjAgTDU4MS4wIDYyNy41IEw1NzkuNSA2MjUuMCBMNTc4LjUgNjE3LjUgTDU3My41IDYwMC41IEw1NjguNSA1ODguNSBMNTYwLjAgNTczLjUgTDU0OC41IDU1OC4wIEw1MzYuMCA1NDUuMCBMNTE2LjAgNTMwLjAgTDUwMS4wIDUyMi4wIEw0ODguNSA1MTcuMCBMNDcwLjAgNTEyLjAgTDQ1NS41IDUxMC4wIEw0MzEuNSA1MTAuMCBMNDIzLjAgNTExLjAgTDM5NS41IDUxOC4wIEwzNzIuNSA1MjkuMCBMMzUzLjAgNTQzLjAgTDE4Ni4wIDcxMC4wIEwxNzEuNSA3MjEuNSBMMTU5LjAgNzI4LjAgTDE0Ni41IDczMi4wIEwxMzMuMCA3MzQuMCBMMTIyLjUgNzM0LjAgTDEwNS4wIDczMS4wIEw5Mi4wIDcyNi4wIEw4MS41IDcyMC4wIEw2OS4wIDcxMC4wIEwzMC4wIDc0OS41IEw0Ni41IDc2My41IEw2Mi41IDc3My41IEw4MC41IDc4MS41IEw5My41IDc4NS41IEwxMTkuMCA3ODkuNSBMMTM2LjUgNzg5LjUgTDE1Mi41IDc4Ny41IEwxNjkuMCA3ODMuNSBMMTkzLjAgNzczLjUgTDIxMy4wIDc2MC41IEwzMDYuNSA2NjkuMCBMMzEwLjAgNjg2LjAgTDMxNC4wIDY5OC4wIEwzMjAuMCA3MTEuNSBMMzMwLjAgNzI4LjAgTDM0Ny41IDc0OC41IEwzNjAuNSA3NTkuNSBMMzcyLjUgNzY3LjUgTDM4My41IDc3My41IEw0MDQuNSA3ODEuNSBMNDMxLjUgNzg2LjUgTDQ1NS41IDc4Ni41IEw0NzguNSA3ODIuNSBMNDk0LjAgNzc3LjUgTDUxNi4wIDc2Ni41IEw1MzYuMCA3NTEuNSBMODY5LjAgNDE5LjUgTDg4MC4wIDQxMi41IEw4OTQuNSA0MDYuNSBMOTA4LjUgNDAzLjUgTDkyMi4wIDQwMy4wIEw5MzkuNSA0MDUuNSBMOTUxLjAgNDA5LjUgTDk2MS4wIDQxNC41IEw5NzcuNSA0MjcuMFogTTQ0MS41IDU2NS41IEw0NTYuMCA1NjYuNSBMNDcxLjUgNTcwLjUgTDQ4NC41IDU3Ni41IEw0OTcuMCA1ODUuNSBMNTA1LjAgNTkzLjAgTDUxNS4wIDYwNi41IEw1MjMuMCA2MjUuMCBMNTI2LjAgNjQwLjUgTDUyNi4wIDY1Ni4wIEw1MjMuMCA2NzEuNSBMNTE1LjAgNjkwLjAgTDUwOC4wIDcwMC4wIEw0OTIuMCA3MTUuMCBMNDc2LjUgNzI0LjAgTDQ2MS41IDcyOS4wIEw0NDUuNSA3MzEuMCBMNDMwLjUgNzMwLjAgTDQxNS4wIDcyNi4wIEwzOTkuMCA3MTguMCBMMzg4LjUgNzEwLjAgTDM3OC4wIDY5OS4wIEwzNjguNSA2ODQuMCBMMzYzLjUgNjcwLjUgTDM2MC41IDY1My4wIEwzNjEuNSA2MzUuMCBMMzY0LjUgNjIyLjUgTDM3MS41IDYwNy4wIEwzODEuMCA1OTQuMCBMMzk2LjAgNTgwLjUgTDQxMC4wIDU3Mi41IEw0MjUuNSA1NjcuNVpNNjQ4LjUgMTM4LjUgTDYwMS4wIDE4Ni4wIEw2NDguNSAyMzQuNSBMNjAxLjAgMjgyLjUgTDYwMS4wIDI4NC4wIEw2NDguMCAzMzEuMCBMNjk2LjUgMjgzLjUgTDY0OC41IDIzNS4wIEw2OTYuNSAxODYuMCBaTTY0OC4wIDQyLjAgTDYwMS4wIDkwLjAgTDY0OC4wIDEzNy41IEw2NDkuMCAxMzcuNSBMNjk2LjUgODkuMCBMNjQ5LjUgNDIuMFpNMTA1Ni4wIDMwLjAgTDEwNTYuMCA1MDMuNSBMMTExMS41IDUwNC4wIEwxMTExLjUgMzAuMFpNOTEwLjUgMzAuMCBMOTEwLjAgMzEzLjAgTDk2NS41IDMxMy41IEw5NjYuMCAzMC41WiIvPjwvc3ZnPg==">
+    <div class="ttl"><h1>فلش‌کارت لایتنر</h1><small id="sub">Leitner · daily practice</small></div>
+    <nav class="nav">
+      <button class="chip" id="nav-p" aria-pressed="true">تمرین</button>
+      <button class="chip" id="nav-h" aria-pressed="false">تاریخچه</button>
+      <button class="chip" id="nav-s" aria-pressed="false">تنظیمات</button>
+    </nav>
+  </header>
+  <div id="msg"></div>
+  <div id="app"><div class="panel"><p class="muted">در حال آماده‌سازی…</p></div></div>
+</div>
+
+<script>
+(function(){
+var SERVER="Google Sheets",INT={1:1,2:2,3:4,4:7,5:14};
+var S={view:"practice",cfg:{perDay:10,maxNew:0,rounds:1,sheetSync:true,autoSpeak:true,sources:[]},prog:{p:{},session:null,filter:[],day:null,days:{}},logs:{},hist:null,col:null,sq:{},dirty:{},logBuf:{},tabsOk:{},syncT:null,syncErr:false,cards:[],phase:"boot",idx:0,show:false,mcp:null,uid:null,docs:{},q:{},draft:null,loadErr:null,timer:null};
+var app=document.getElementById("app"),msg=document.getElementById("msg");
+var ICON='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fa(n){try{return Number(n).toLocaleString("fa-IR")}catch(e){return String(n)}}
+function today(){return new Date().toLocaleDateString("en-CA")}
+function addDays(d,n){var x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return x.toLocaleDateString("en-CA")}
+function rid(){return Math.random().toString(36).slice(2,6)}
+function note(t,ok){msg.innerHTML=t?'<div class="msg'+(ok?' ok':'')+'" role="status">'+esc(t)+'</div>':""}
+function errText(e){
+  var c=e&&e.code;
+  if(c==="bad_token")return "توکن اسکریپت درست نیست. در تنظیمات، اتصال را دوباره وارد کن.";
+  if(c==="net")return "به اسکریپت وصل نشد. اینترنت و آدرس اتصال را چک کن.";
+  if(c==="tool_error")return "شیت پیدا نشد یا اسکریپت به آن دسترسی ندارد. لینک شیت را چک کن و شیت باید با همان حساب Google خودت باشد.";
+  return "خطا: "+(e&&e.message?e.message:"نامشخص");
+}
+function saveDoc(name,data){
+  var d=S.docs[name];if(!d)return Promise.resolve();
+  S.pend=S.pend||{};S.run=S.run||{};S.touched=true;
+  var o=JSON.parse(JSON.stringify(data));o.ts=Date.now();lsSet("lt_doc_"+name,o);S.pend[name]=o;
+  if(S.run[name])return S.run[name];
+  function go(){var x=S.pend[name];if(x===undefined){delete S.run[name];return Promise.resolve()}delete S.pend[name];return d.set(x).catch(function(){note("ذخیره در شیت انجام نشد؛ نسخه‌ی گوشی نگه داشته شد و بعداً دوباره تلاش می‌شود.")}).then(go)}
+  return S.run[name]=go();
+}
+function nowHM(){return new Date().toTimeString().slice(0,5)}
+function fdate(d){try{return new Date(d+"T12:00:00").toLocaleDateString("fa-IR",{weekday:"short",day:"numeric",month:"long"})}catch(e){return d}}
+function logDoc(d){var n="log_"+d;if(!S.docs[n]&&S.col)S.docs[n]=S.col.doc(n);return n}
+function addLog(c,known,box,rep,round){
+  var d=today(),n=logDoc(d),L=S.logs[d]||(S.logs[d]={date:d,entries:[]});
+  L.entries.push({t:nowHM(),r:round,id:c.id,f:c.front.slice(0,60),l:c.label,k:known?1:0,b:box,rp:rep?1:0});
+  saveDoc(n,L);
+  if(c.sid){(S.logBuf[c.sid]||(S.logBuf[c.sid]=[])).push([d,nowHM(),round,c.label,c.front,known?"بلد":"سخت",box,rep?"مرور مجدد":"دوره‌ی اول"])}
+  var D=S.prog.days||(S.prog.days={}),x=D[d]||(D[d]={n:0,k:0,h:0,r:0});
+  x.n++;if(known)x.k++;else x.h++;x.r=Math.max(x.r,round);
+  var ks=Object.keys(D).sort();while(ks.length>120)delete D[ks.shift()];
+}
+function srcOf(sid){for(var i=0;i<S.cfg.sources.length;i++)if(S.cfg.sources[i].sid===sid)return S.cfg.sources[i];return null}
+function ensureTabs(sid){
+  if(S.tabsOk[sid])return Promise.resolve();
+  var id=srcOf(sid).id;
+  return call("get_spreadsheet",{spreadsheetId:id,fields:["sheets.properties.title"]}).then(function(p){
+    var have={},reqs=[],hd=[];
+    ((p&&p.sheets)||[]).forEach(function(sh){have[sh.properties.title]=1});
+    if(!have.Leitner_Box){reqs.push({addSheet:{properties:{title:"Leitner_Box"}}});hd.push(["Leitner_Box!A1:F1",[["کارت","سرفصل","جعبه","مرور بعدی","آخرین مرور","شناسه"]]])}
+    if(!have.Leitner_Log){reqs.push({addSheet:{properties:{title:"Leitner_Log"}}});hd.push(["Leitner_Log!A1:H1",[["تاریخ","ساعت","دوره","سرفصل","کارت","نتیجه","جعبه","نوع"]]])}
+    var pr=reqs.length?call("update_spreadsheet",{spreadsheetId:id,requests:reqs}):Promise.resolve();
+    return pr.then(function(){return hd.reduce(function(a,h){return a.then(function(){return call("update_values",{spreadsheetId:id,range:h[0],values:h[1]})})},Promise.resolve())});
+  }).then(function(){S.tabsOk[sid]=1});
+}
+function syncSheet(sid){
+  var sr=srcOf(sid);if(!sr||!sr.id)return Promise.resolve();
+  return ensureTabs(sid).then(function(){
+    var rows=[["کارت","سرفصل","جعبه","مرور بعدی","آخرین مرور","شناسه"]];
+    S.cards.forEach(function(c){if(c.sid!==sid)return;var x=S.prog.p[c.id];rows.push([c.front,c.label,x?x[0]:"جدید",x?x[1]:"",x&&x[2]?x[2]:"",c.id])});
+    return call("update_values",{spreadsheetId:sr.id,range:"Leitner_Box!A1:F"+rows.length,values:rows});
+  }).then(function(){
+    var lg=S.logBuf[sid]||[];if(!lg.length)return;S.logBuf[sid]=[];
+    return call("append_values",{spreadsheetId:sr.id,range:"Leitner_Log!A1",values:lg});
+  });
+}
+function runSync(){
+  if(S.cfg.sheetSync===false)return;
+  Object.keys(S.dirty).forEach(function(sid){
+    delete S.dirty[sid];
+    S.sq[sid]=(S.sq[sid]||Promise.resolve()).then(function(){return syncSheet(sid)}).then(function(){S.syncErr=false}).catch(function(e){
+      S.logBuf[sid]=[];
+      if(!S.syncErr){S.syncErr=true;note("ذخیره در خود شیت انجام نشد: "+(e&&e.code==="tool_error"?"دسترسی ویرایش شیت را چک کن.":errText(e))+" پیشرفتت در خود صفحه ذخیره شده.")}
+    });
+  });
+}
+function markSync(sid,now){
+  if(S.cfg.sheetSync===false||!sid)return;
+  S.dirty[sid]=1;clearTimeout(S.syncT);
+  if(now)runSync();else S.syncT=setTimeout(runSync,7000);
+}
+function saveCfgSoon(){clearTimeout(S.timer);S.timer=setTimeout(function(){saveDoc("config",S.cfg)},500)}
+function sheetId(s){var m=/\/d\/([A-Za-z0-9_-]+)/.exec(s||"");if(m)return m[1];s=(s||"").trim();return /^[A-Za-z0-9_-]{20,}$/.test(s)?s:null}
+function rng(t,r){return "'"+t.replace(/'/g,"''")+"'!"+r}
+var CODE="// Leitner Flashcards - Google Sheets bridge (paste into the sheet: Extensions > Apps Script)\nvar TOKEN = '__TOKEN__';\n\nfunction out(o) {\n  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);\n}\nfunction tabOf(ss, name, create) {\n  var sh = ss.getSheetByName(name);\n  if (!sh && create) sh = ss.insertSheet(name);\n  return sh;\n}\nfunction grow(sh, rows, cols) {\n  if (sh.getMaxRows() < rows) sh.insertRowsAfter(sh.getMaxRows(), rows - sh.getMaxRows());\n  if (sh.getMaxColumns() < cols) sh.insertColumnsAfter(sh.getMaxColumns(), cols - sh.getMaxColumns());\n}\nfunction pad(vals) {\n  var w = 1;\n  vals.forEach(function (r) { if (r.length > w) w = r.length; });\n  return vals.map(function (r) { var x = r.slice(); while (x.length < w) x.push(''); return x; });\n}\nfunction dataSheet() {\n  var ss = SpreadsheetApp.getActive();\n  return tabOf(ss, 'Leitner_Data', true);\n}\n\nfunction doGet() {\n  return ContentService.createTextOutput('Leitner bridge OK');\n}\n\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  try {\n    var r = JSON.parse(e.postData.contents);\n    if (r.token !== TOKEN) return out({ error: 'token' });\n    var a = r.action;\n    if (a === 'ping') return out({ ok: 1 });\n    var WRITES = { ensure: 1, update: 1, append: 1, docSet: 1 };\n    if (WRITES[a]) lock.waitLock(30000);\n    var cache = {};\n    var open = function (id) { return cache[id] || (cache[id] = SpreadsheetApp.openById(id)); };\n\n    if (a === 'boot') {\n      var ds0 = dataSheet(), all0 = ds0.getLastRow() ? ds0.getDataRange().getValues() : [], res = {};\n      r.names.forEach(function (n) {\n        var ch = [];\n        all0.forEach(function (row) { if (row[0] === n) ch.push([+row[1], String(row[2])]); });\n        ch.sort(function (x, y) { return x[0] - y[0]; });\n        res[n] = ch.length ? JSON.parse(ch.map(function (c) { return c[1]; }).join('')) : null;\n      });\n      return out({ docs: res });\n    }\n    if (a === 'cards') {\n      var results = r.reqs.map(function (q) {\n        try {\n          var sh0 = open(q.id).getSheetByName(q.tab);\n          if (!sh0) return { error: 'notab' };\n          var lr = Math.min(1000, sh0.getLastRow()), lc = Math.min(26, sh0.getLastColumn());\n          return { values: lr && lc ? sh0.getRange(1, 1, lr, lc).getDisplayValues() : [] };\n        } catch (er) { return { error: String(er) }; }\n      });\n      return out({ results: results });\n    }\n\n    if (a === 'tabs') {\n      var s = open(r.id);\n      return out({ title: s.getName(), sheets: s.getSheets().map(function (x) { return x.getName(); }) });\n    }\n    if (a === 'values') {\n      var sh = tabOf(open(r.id), r.tab, false);\n      if (!sh) return out({ error: 'notab', message: 'tab not found' });\n      var m = /:([A-Z]+)(\\d+)$/.exec(r.range || '');\n      var maxRow = m ? +m[2] : 1000;\n      var v = sh.getLastRow() ? sh.getDataRange().getDisplayValues() : [];\n      v = v.slice(0, maxRow).map(function (row) { return row.slice(0, 26); });\n      return out({ values: v });\n    }\n    if (a === 'ensure') {\n      var ss = open(r.id);\n      r.titles.forEach(function (t) { tabOf(ss, t, true); });\n      return out({ ok: 1 });\n    }\n    if (a === 'update') {\n      var sh2 = tabOf(open(r.id), r.tab, true);\n      var vals = pad(r.values);\n      grow(sh2, vals.length, vals[0].length);\n      sh2.getRange(1, 1, vals.length, vals[0].length).setValues(vals);\n      return out({ ok: 1 });\n    }\n    if (a === 'append') {\n      var sh3 = tabOf(open(r.id), r.tab, true);\n      var vv = pad(r.values), start = sh3.getLastRow() + 1;\n      grow(sh3, start + vv.length - 1, vv[0].length);\n      sh3.getRange(start, 1, vv.length, vv[0].length).setValues(vv);\n      return out({ ok: 1 });\n    }\n    if (a === 'docGet') {\n      var ds = dataSheet(), all = ds.getLastRow() ? ds.getDataRange().getValues() : [], ch = [];\n      all.forEach(function (row) { if (row[0] === r.name) ch.push([+row[1], String(row[2])]); });\n      if (!ch.length) return out({ data: null });\n      ch.sort(function (x, y) { return x[0] - y[0]; });\n      return out({ data: JSON.parse(ch.map(function (c) { return c[1]; }).join('')) });\n    }\n    if (a === 'docSet') {\n      var d2 = dataSheet(), last = d2.getLastRow();\n      if (last) {\n        var col = d2.getRange(1, 1, last, 1).getValues();\n        for (var i = col.length - 1; i >= 0; i--) if (col[i][0] === r.name) d2.deleteRow(i + 1);\n      }\n      var js = JSON.stringify(r.data), rows = [];\n      for (var p = 0, k = 0; p < js.length; p += 40000, k++) rows.push([r.name, k, js.substr(p, 40000)]);\n      var st = d2.getLastRow() + 1;\n      grow(d2, st + rows.length - 1, 3);\n      d2.getRange(st, 1, rows.length, 3).setNumberFormat('@').setValues(rows);\n      return out({ ok: 1 });\n    }\n    return out({ error: 'action', message: 'unknown action' });\n  } catch (err) {\n    return out({ error: 'script', message: String(err) });\n  } finally {\n    try { lock.releaseLock(); } catch (x) {}\n  }\n}\n";
+function lsGet(k){try{var v=localStorage.getItem(k);return v==null?null:JSON.parse(v)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function getConn(){var c=lsGet("lt_conn");return c&&c.url&&c.token?c:null}
+function api(action,p,tr){
+  var cn=S.conn;if(!cn)return Promise.reject({code:"net"});
+  var body=JSON.stringify(Object.assign({token:cn.token,action:action},p||{}));
+  var RD={boot:1,cards:1,tabs:1,values:1,docGet:1,ping:1};
+  return fetch(cn.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:body,redirect:"follow"}).then(function(r){return r.text().then(function(t){return {st:r.status,t:t}})},function(e){throw {code:"net",message:String(e&&e.message||e)}}).then(function(o){
+    var j;try{j=JSON.parse(o.t)}catch(x){throw {code:"html",message:"HTTP "+o.st+": "+o.t.replace(/<[^>]+>/g," ").replace(/\s+/g," ").slice(0,140)}}
+    if(j&&j.error)throw {code:j.error==="token"?"bad_token":"tool_error",message:j.message||j.error};
+    return j;
+  }).catch(function(e){if(!tr&&RD[action]&&e&&(e.code==="net"||e.code==="html"))return new Promise(function(ok){setTimeout(ok,900)}).then(function(){return api(action,p,1)});throw e});
+}
+function parseRange(r){
+  var m=/^'((?:[^']|'')+)'!([A-Z]+\d+)(?::([A-Z]+\d*))?$/.exec(r)||/^([^!']+)!([A-Z]+\d+)(?::([A-Z]+\d*))?$/.exec(r);
+  return {tab:m[1].replace(/''/g,"'"),range:m[2]+(m[3]?":"+m[3]:"")};
+}
+function call(tool,i){
+  if(tool==="get_spreadsheet")return api("tabs",{id:i.spreadsheetId}).then(function(r){return {properties:{title:r.title},sheets:r.sheets.map(function(n){return {properties:{title:n}}})}});
+  if(tool==="get_values"){var q=parseRange(i.range);return api("values",{id:i.spreadsheetId,tab:q.tab,range:q.range}).then(function(r){return {values:r.values}})}
+  if(tool==="update_values"){var u=parseRange(i.range);return api("update",{id:i.spreadsheetId,tab:u.tab,values:i.values})}
+  if(tool==="append_values"){var a=parseRange(i.range);return api("append",{id:i.spreadsheetId,tab:a.tab,values:i.values})}
+  if(tool==="update_spreadsheet"){var t=[];i.requests.forEach(function(r){if(r.addSheet)t.push(r.addSheet.properties.title)});return api("ensure",{id:i.spreadsheetId,titles:t})}
+  return Promise.reject({message:"unknown tool"});
+}
+function mkDoc(name){return {
+  get:function(){
+    return api("docGet",{name:name}).then(function(r){
+      if(r.data!=null){lsSet("lt_doc_"+name,r.data);return {exists:true,data:function(){return r.data}}}
+      var l=lsGet("lt_doc_"+name);return {exists:l!=null,data:function(){return l}};
+    },function(e){var l=lsGet("lt_doc_"+name);if(l!=null)return {exists:true,data:function(){return l}};throw e});
+  },
+  set:function(d){return api("docSet",{name:name,data:d})}
+}}
+function newToken(){var a=new Uint8Array(12);crypto.getRandomValues(a);return [].map.call(a,function(b){return ("0"+b.toString(16)).slice(-2)}).join("")}
+function renderConnect(){
+  var tk=lsGet("lt_token")||newToken();lsSet("lt_token",tk);
+  var code=CODE.replace("__TOKEN__",tk),h="";
+  h+='<div class="panel"><h2>اتصال به Google Sheet (فقط یک بار)</h2><p class="muted">این اپ مستقل است و برای ذخیره‌ی جعبه‌ها و خواندن شیت‌ها به یک اسکریپت کوچک در خود شیتت وصل می‌شود.</p>';
+  h+='<ol style="padding-inline-start:20px;margin:10px 0"><li>یکی از شیت‌هایت را باز کن (شیت اصلی). از منو: <b>Extensions › Apps Script</b>.</li><li>همه‌ی کد داخل ادیتور را پاک کن و کد زیر را بچسبان. ذخیره کن (Ctrl+S).</li><li>بالا راست <b>Deploy › New deployment</b> را بزن. نوع: <b>Web app</b>. Execute as: <b>Me</b>. Who has access: <b>Anyone</b>. Deploy کن و اجازه‌ها را تأیید کن.</li><li>آدرسی که به <span class="ltr">/exec</span> ختم می‌شود را کپی کن و پایین بچسبان.</li></ol>';
+  h+='<textarea id="cg" readonly dir="ltr" rows="7" style="width:100%;font:12px/1.4 monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--ink)">'+esc(code)+'</textarea>';
+  h+='<p style="margin:8px 0"><button class="btn sm" id="cc">کپی کد</button></p>';
+  h+='<label class="f" for="cu">آدرس Web app</label><input type="text" class="ltr" id="cu" placeholder="https://script.google.com/macros/s/.../exec">';
+  h+='<label class="f" for="ct" style="margin-top:8px">توکن (همان است که در کد بالاست؛ روی گوشی دیگر همین را وارد کن)</label><input type="text" class="ltr" id="ct" value="'+esc(tk)+'">';
+  h+='<p style="margin-top:12px"><button class="btn go" id="cs" style="width:100%">اتصال و شروع</button></p></div>';
+  app.innerHTML=h;
+  document.getElementById("cc").onclick=function(){var t=document.getElementById("cg");t.select();var ok=false;try{if(navigator.clipboard){navigator.clipboard.writeText(t.value);ok=true}}catch(e){}if(!ok)try{ok=document.execCommand("copy")}catch(e){}note(ok?"کد کپی شد.":"کد انتخاب شد؛ با Ctrl+C کپی کن.",true)};
+  document.getElementById("cs").onclick=function(){
+    var url=document.getElementById("cu").value.trim(),tok=document.getElementById("ct").value.trim();
+    if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){note("آدرس باید با https://script.google.com شروع و به /exec ختم شود.");return}
+    if(!tok){note("توکن خالی است.");return}
+    S.conn={url:url,token:tok};note("در حال تست اتصال…");
+    api("ping").then(function(){lsSet("lt_conn",S.conn);lsSet("lt_token",tok);note("وصل شد.",true);S.phase="boot";render();boot()}).catch(function(e){S.conn=null;var c=e&&e.code,m=e&&e.message?" ["+e.message+"]":"";note(c==="bad_token"?"توکن با کد اسکریپت نمی‌خواند. توکنِ داخل کد (خط اول) را با کادر توکن یکی کن.":c==="html"?"گوگل به‌جای جواب اسکریپت یک صفحه داد؛ یعنی دسترسی بسته است. در Deploy مقدار Who has access را روی Anyone بگذار (نه Anyone with Google account)، دوباره Deploy کن و آدرس جدید /exec را بگذار."+m:c==="net"?"مرورگر نتوانست به آدرس وصل شود. فایل را در Chrome یا Safari معمولی باز کن، نه در پیش‌نمایشِ داخل برنامه، و آدرس را کامل کپی کن."+m:"اتصال برقرار نشد."+m)});
+  };
+}
+
+var VOICES=[];
+function loadVoices(){try{VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
+try{loadVoices();speechSynthesis.onvoiceschanged=loadVoices}catch(e){}
+function pickVoice(){
+  var en=VOICES.filter(function(v){return /^en[-_]/i.test(v.lang)});
+  var us=en.filter(function(v){return /en[-_]US/i.test(v.lang)});
+  return (us[0]||en[0]||null);
+}
+function noteLink(){msg.innerHTML='<div class="msg" role="status">این مرورگر تلفظ را پشتیبانی نمی‌کند. با Chrome یا Safari باز کن.</div>'}
+function speak(text,manual){
+  if(!text)return;
+  if(typeof SpeechSynthesisUtterance==="undefined"||!window.speechSynthesis){if(manual)noteLink();return}
+  var started=false,parts=text.match(/[^.!?\n]+[.!?]*/g)||[text];
+  try{speechSynthesis.cancel();speechSynthesis.resume()}catch(e){}
+  parts.forEach(function(p,i){
+    p=p.trim();if(!p)return;
+    var u=new SpeechSynthesisUtterance(p);u.lang="en-US";u.rate=.9;
+    var v=pickVoice();if(v)u.voice=v;
+    u.onstart=function(){started=true;note("")};
+    u.onerror=function(ev){if(manual&&ev&&ev.error&&ev.error!=="interrupted"&&ev.error!=="canceled")note("صدا پخش نشد ("+ev.error+"). اگر در گوشی هستی، صدای رسانه و حالت سکوت را چک کن.")};
+    speechSynthesis.speak(u);
+  });
+  setTimeout(function(){if(manual&&!started&&!speechSynthesis.speaking&&!speechSynthesis.pending)noteLink()},1800);
+}
+
+function pickCols(h){
+  function find(re,def){for(var i=0;i<h.length;i++)if(re.test(h[i]||""))return i;return def}
+  var f=find(/^(english|word|phrase|question|سوال|سؤال)/i,0),b=find(/persian|farsi|answer|جواب|فارسی/i,f===0?1:0);
+  if(b===f)b=f===0?1:0;
+  return {front:f,back:b,struct:find(/structure|ساختار|template|outline/i,-1),cat:find(/^(category|type|chapter|سرفصل|دسته)/i,-1),ex:find(/^(en(glish)?\s*example|example)/i,-1),exfa:find(/^(fa(rsi)?\s*example|persian\s*example)|ترجمه‌ی مثال/i,-1)};
+}
+function colName(i,h){return String.fromCharCode(65+i)+(h[i]?" · "+h[i]:"")}
+
+function cardSig(){var a=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(t){if(t.on)a.push([sr.sid,sr.id,t.tid,t.title,t.label,t.front,t.back,t.struct,t.cat,t.ex,t.exfa,t.speak])})});return JSON.stringify(a)}
+function buildCards(res,list){
+  var out=[];
+  list.forEach(function(q,k){
+    var rows=(res[k]&&res[k].values)||[],s=q.s,t=q.t;
+    for(var r=1;r<rows.length;r++){
+      var g=function(c){return c==null||c<0?"":String(rows[r][c]==null?"":rows[r][c]).trim()};
+      var a=g(t.front),b=g(t.back);
+      if(a&&b)out.push({id:s.sid+"_"+t.tid+"_"+(r+1),sid:s.sid,tid:t.tid,label:t.label||t.title,front:a,back:b,struct:g(t.struct),cat:g(t.cat),ex:g(t.ex),exfa:g(t.exfa),speak:t.speak||"front"});
+    }
+  });
+  return out;
+}
+function loadCards(){
+  var list=[];
+  S.cfg.sources.forEach(function(s){(s.tabs||[]).forEach(function(t){if(t.on)list.push({s:s,t:t})})});
+  if(!list.length){S.cards=[];S.phase="idle";render();return}
+  var sig=cardSig(),ch=lsGet("lt_cards"),hit=ch&&ch.sig===sig&&ch.cards;
+  if(hit){S.cards=ch.cards;S.loadErr=null;S.phase="idle";restoreSession();render()}
+  else{S.phase="loading";render()}
+  api("cards",{reqs:list.map(function(q){return {id:q.s.id,tab:q.t.title}})}).then(function(r){
+    var bad=r.results.filter(function(x){return x.error});
+    if(bad.length&&bad.length===r.results.length)throw {code:"tool_error",message:bad[0].error};
+    var cards=buildCards(r.results,list);
+    lsSet("lt_cards",{sig:sig,cards:cards});
+    var changed=!hit||JSON.stringify(cards)!==JSON.stringify(S.cards);
+    S.cards=cards;S.loadErr=null;
+    if(!hit){S.phase="idle";restoreSession()}
+    if(changed&&S.phase!=="card")render();
+  }).catch(function(e){
+    if(hit){note("نسخه‌ی ذخیره‌شده نمایش داده می‌شود؛ شیت الان خوانده نشد.");return}
+    S.loadErr=errText(e);S.phase="idle";render();
+  });
+}
+function byId(id){for(var i=0;i<S.cards.length;i++)if(S.cards[i].id===id)return S.cards[i];return null}
+function active(){var f=S.prog.filter||[];return f.length?S.cards.filter(function(c){return f.indexOf(c.tid)>=0}):S.cards}
+function counts(){
+  var t=today(),p=S.prog.p,due=0,nw=0;
+  active().forEach(function(c){var x=p[c.id];if(!x)nw++;else if(x[1]<=t)due++});
+  return {due:due,nw:nw};
+}
+function plan(){var n=counts(),T=S.cfg.perDay,dn=Math.min(n.due,T),rest=T-dn,cap=S.cfg.maxNew>0?S.cfg.maxNew:rest;return {dn:dn,nn:Math.max(0,Math.min(n.nw,rest,cap))}}
+function boxCounts(){var b=[0,0,0,0,0],p=S.prog.p;active().forEach(function(c){var x=p[c.id];if(x)b[x[0]-1]++});return b}
+function restoreSession(){var s=S.prog.session;if(s&&s.date===today()&&s.ids)S.idx=Math.min(s.i||0,s.ids.length)}
+function resetSession(){S.prog.session=null;if(!S.prog.day||!S.prog.day.rounds)S.prog.day=null;S.idx=0;S.show=false;saveDoc("progress",S.prog)}
+function startSession(){
+  var s=S.prog.session,t=today();
+  if(!(s&&s.date===t&&s.ids&&s.ids.length)){
+    var p=S.prog.p,due=[],nw=[];
+    active().forEach(function(c){var x=p[c.id];if(!x)nw.push(c);else if(x[1]<=t)due.push([x[0],x[1],c])});
+    due.sort(function(a,b){return a[0]-b[0]||(a[1]<b[1]?-1:1)});
+    var pl=plan(),ids=due.slice(0,pl.dn).map(function(x){return x[2].id}).concat(nw.slice(0,pl.nn).map(function(c){return c.id}));
+    S.prog.session={date:t,round:1,ids:ids,i:0};S.prog.day={date:t,ids:ids.slice(),rounds:0,last:{}};S.idx=0;
+    saveDoc("progress",S.prog);
+  }
+  S.show=false;S.phase="card";render();autoFront();
+}
+function startRepeat(){
+  var t=today(),d=S.prog.day,ss=S.prog.session;if((!d||d.date!==t)&&ss&&ss.date===t)d=S.prog.day={date:t,ids:ss.ids.slice(),rounds:1,last:{}};if(!d||d.date!==t||!d.ids.length)return;
+  var hard=[],ok=[];d.ids.forEach(function(id){if(!byId(id))return;((d.last||{})[id]===0?hard:ok).push(id)});
+  var ids=hard.concat(ok);if(!ids.length)return;
+  S.prog.session={date:t,round:d.rounds+1,rep:1,ids:ids,i:0};S.idx=0;S.show=false;
+  saveDoc("progress",S.prog);S.phase="card";render();autoFront();
+}
+function cur(){var s=S.prog.session;return s&&s.ids&&S.idx<s.ids.length?byId(s.ids[S.idx]):null}
+function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="front")speak(c.front)}
+function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="back")speak(c.back)}
+function answer(known){
+  var s=S.prog.session,id=s.ids[S.idx],x=S.prog.p[id],box,c=byId(id);
+  var td=today(),base=x?(x[2]===td?x[3]:x[0]):0;
+  box=known?(base?Math.min(5,base+1):2):1;
+  S.prog.p[id]=[box,addDays(td,known?INT[box]:1),td,base];
+  var dy=S.prog.day;if(dy&&dy.date===s.date){(dy.last||(dy.last={}))[id]=known?1:0}
+  if(c)addLog(c,known,box,s.rep,s.round||1);
+  S.idx++;s.i=S.idx;S.show=false;
+  if(S.idx>=s.ids.length){S.phase="done";if(dy&&dy.date===s.date)dy.rounds=Math.max(dy.rounds||0,s.round||1);var xx=S.prog.days&&S.prog.days[s.date];if(xx)xx.r=Math.max(xx.r,s.round||1)}
+  saveDoc("progress",S.prog);
+  if(c)markSync(c.sid,S.idx>=s.ids.length);
+  render();if(S.phase==="card")autoFront();
+}
+
+function render(){
+  if(!S.conn){renderConnect();return}
+  document.getElementById("nav-p").setAttribute("aria-pressed",S.view==="practice");
+  document.getElementById("nav-s").setAttribute("aria-pressed",S.view==="setup");
+  document.getElementById("nav-h").setAttribute("aria-pressed",S.view==="hist");
+  document.getElementById("sub").textContent=new Date().toLocaleDateString("fa-IR",{weekday:"long",day:"numeric",month:"long"});
+  if(S.view==="setup")return renderSetup();
+  if(S.view==="hist")return renderHist();
+  renderPractice();
+}
+function renderPractice(){
+  var h="";
+  if(S.phase==="boot"||S.phase==="loading"){app.innerHTML='<div class="panel"><p class="muted">در حال خواندن کارت‌ها از شیت…</p></div>';return}
+  var anyOn=S.cfg.sources.some(function(s){return (s.tabs||[]).some(function(t){return t.on})});
+  if(!anyOn){
+    app.innerHTML='<div class="panel"><h2>اولین منبع را اضافه کن</h2><p class="muted">یک یا چند Google Sheet و تب‌هایی که می‌خواهی تمرین شوند را در تنظیمات انتخاب کن.</p><p style="margin-top:12px"><button class="btn go" id="to-setup">رفتن به تنظیمات</button></p></div>';
+    document.getElementById("to-setup").onclick=function(){go("setup")};return;
+  }
+  if(S.loadErr)h+='<div class="msg">'+esc(S.loadErr)+'</div>';
+  var s=S.prog.session,t=today(),c=cur();
+  if(S.phase==="card"&&c){
+    var x=S.prog.p[c.id],ex=!!c.struct,txt=c.speak==="back"?c.back:c.front;
+    h+='<div class="prog"><i style="width:'+Math.round(100*S.idx/s.ids.length)+'%"></i></div>';
+    h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+(s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span></div>';
+    h+='<div class="cb'+(ex?' ex':'')+'">';
+    h+='<div><div class="lab">'+(ex?'Question':'Say it in English')+'</div><div class="q" dir="auto">'+esc(c.front)+'</div></div>';
+    if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
+    h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
+    if(S.show){
+      if(ex||c.speak==="back")h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(c.back)+'</div></div>';
+      else h+='<div class="back" dir="auto">'+esc(c.back)+'</div>';
+      if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start"><div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'')+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال</span></button></div></div>';
+    }
+    h+='</div></div>';
+    if(!S.show)h+='<button class="btn go" id="rev" style="width:100%">نمایش پاسخ</button>';
+    else h+='<div class="grid2"><button class="btn hard" id="no">سخت بود</button><button class="btn known" id="yes">بلد بودم</button></div>';
+    app.innerHTML=h;
+    document.getElementById("spk").onclick=function(){speak(txt,true)};
+    var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
+    var r=document.getElementById("rev");if(r)r.onclick=reveal;
+    var y=document.getElementById("yes");if(y){y.onclick=function(){answer(true)};document.getElementById("no").onclick=function(){answer(false)}}
+    return;
+  }
+  var pl=plan(),nd=pl.dn,nn=pl.nn;
+  var finished=s&&s.date===t&&s.ids&&s.ids.length&&S.idx>=s.ids.length;
+  h+='<div class="panel"><h2>'+(finished?'تمرین امروز تمام شد':'تمرین امروز')+'</h2>';
+  var dy=S.prog.day,dr=(dy&&dy.date===t)?dy.rounds:0,R=S.cfg.rounds||1;
+  if(finished){
+    h+='<p class="muted">دوره '+fa(dr)+' از '+fa(R)+' تمام شد · '+fa(s.ids.length)+' کارت.'+(s.rep?'':' فردا کارت‌های سخت اول می‌آیند.')+'</p>';
+    if(dr<R)h+='<p><button class="btn go" id="again" style="width:100%">دوره '+fa(dr+1)+': مرور مجدد کارت‌های امروز</button></p><p class="muted">اول کارت‌هایی که سخت بودند می‌آیند. هر مرور جعبه را به‌روز می‌کند، ولی هر کارت در یک روز فقط یک جعبه بالا می‌رود.</p>';
+    else h+='<p class="muted">همه‌ی دوره‌های امروز انجام شد. برای دوره‌ی بیشتر، «تعداد دوره در روز» را در تنظیمات زیاد کن.</p>';
+  }
+  else h+='<div class="stats"><div class="stat"><b>'+fa(nd)+'</b><span class="muted">مرور</span></div><div class="stat"><b>'+fa(nn)+'</b><span class="muted">جدید</span></div></div>';
+  var tabs=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(tb){if(tb.on)tabs.push(tb)})});
+  if(tabs.length>1){
+    var f=S.prog.filter||[];
+    h+='<div class="lab">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه</button>'+tabs.map(function(tb){return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+'</button>'}).join("")+'</div>';
+  }
+  var total=nd+nn,resume=s&&s.date===t&&S.idx>0&&S.idx<(s.ids||[]).length;
+  if(!finished&&dr>0&&!resume&&!(s&&s.rep&&s.date===t))h+='<p class="muted">امروز '+fa(dr)+' دوره انجام شده.</p>';
+  if(!finished)h+=(total||resume)?'<button class="btn go" id="start" style="width:100%">'+(resume?'ادامه تمرین':'شروع تمرین')+'</button>':'<p class="muted">امروز کارتی برای مرور نیست.</p>';
+  if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
+  var bc=boxCounts(),mx=Math.max.apply(null,bc.concat([1])),days=[1,2,4,7,14];
+  h+='<div class="boxes" aria-label="Leitner boxes">'+bc.map(function(v,i){return '<div class="bx"><b>'+fa(v)+'</b><i style="height:'+Math.max(4,Math.round(48*v/mx))+'px;background:var(--bar'+(i+1)+')"></i>جعبه '+fa(i+1)+'<br>'+fa(days[i])+' روز</div>'}).join("")+'</div>';
+  h+='</div>';
+  app.innerHTML=h;
+  var b=document.getElementById("start");if(b)b.onclick=startSession;
+  var ag=document.getElementById("again");if(ag)ag.onclick=startRepeat;
+  var rb=document.getElementById("rebuild");if(rb)rb.onclick=function(){resetSession();renderPractice()};
+  [].forEach.call(app.querySelectorAll("[data-f]"),function(el){el.onclick=function(){
+    var f=S.prog.filter||[],k=el.dataset.f;
+    if(k==="*")f=[];else{var i=f.indexOf(k);if(i>=0)f.splice(i,1);else f.push(k)}
+    S.prog.filter=f;resetSession();renderPractice();
+  }});
+}
+
+function renderSetup(){
+  var d=S.draft||(S.draft=JSON.parse(JSON.stringify(S.cfg))),h="";
+  h+='<div class="panel"><h2>تعداد روزانه</h2><div class="grid2"><div><label class="f" for="np">تعداد کل کارت در روز</label><input type="number" id="np" min="1" max="200" value="'+S.cfg.perDay+'"></div><div><label class="f" for="rp">سقف کارت جدید (۰ = بدون سقف)</label><input type="number" id="rp" min="0" max="200" value="'+S.cfg.maxNew+'"></div></div><div style="margin-top:12px"><label class="f" for="rd">تعداد دوره در روز (هر دوره یک بار مرور کامل کارت‌های امروز)</label><input type="number" id="rd" min="1" max="10" value="'+(S.cfg.rounds||1)+'"></div><p class="muted" style="margin-top:8px">اول کارت‌های مرورِ سررسیدشده می‌آیند و بقیه‌ی تعداد کل با کارت جدید پر می‌شود.</p>';
+  h+='<label class="tabhead" style="margin-top:12px"><input type="checkbox" id="as"'+(S.cfg.autoSpeak?" checked":"")+'><span>پخش خودکار تلفظ</span></label><label class="tabhead" style="margin-top:8px"><input type="checkbox" id="ss"'+(S.cfg.sheetSync!==false?" checked":"")+'><span>ذخیره‌ی جعبه‌ها و تاریخچه در خود Google Sheet (تب‌های Leitner_Box و Leitner_Log)</span></label><p class="muted" style="margin-top:8px">تعداد با تغییر همین‌جا اعمال می‌شود و تمرین امروزِ شروع‌نشده دوباره ساخته می‌شود.</p></div>';
+  d.sources.forEach(function(s,i){
+    h+='<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">'+esc(s.name||("منبع "+fa(i+1)))+'</h2><button class="btn sm" data-rm="'+i+'">حذف</button></div>';
+    h+='<label class="f" for="in'+i+'" style="margin-top:8px">لینک یا شناسه‌ی Google Sheet</label><div class="row"><input type="text" class="ltr" id="in'+i+'" data-in="'+i+'" value="'+esc(s.input||"")+'" style="flex:1 1 200px"><button class="btn sm" data-ld="'+i+'">بارگذاری تب‌ها</button></div>';
+    (s.tabs||[]).forEach(function(t,j){
+      h+='<div class="tab"><label class="tabhead"><input type="checkbox" data-tg="'+i+'.'+j+'"'+(t.on?" checked":"")+'><span class="ltr">'+esc(t.title)+'</span></label>';
+      if(t.on&&t.headers){
+        var o=function(sel,none){return (none?'<option value="-1"'+(sel<0?" selected":"")+'>ندارد</option>':"")+t.headers.map(function(_,k){return '<option value="'+k+'"'+(k===sel?" selected":"")+'>'+esc(colName(k,t.headers))+'</option>'}).join("")};
+        var id=i+"."+j;
+        h+='<div><label class="f" for="lb'+id+'">سرفصل این تب (مثلاً تخصصی برق)</label><input type="text" id="lb'+id+'" data-lb="'+id+'" value="'+esc(t.label||t.title)+'"></div>';
+        h+='<div class="grid2"><div><label class="f">روی کارت (سؤال یا کلمه)</label><select data-fc="'+id+'">'+o(t.front)+'</select></div><div><label class="f">پشت کارت (جواب)</label><select data-bc="'+id+'">'+o(t.back)+'</select></div></div>';
+        h+='<div class="grid2"><div><label class="f">ستون ساختار (برای تمرین CELPIP)</label><select data-sc="'+id+'">'+o(t.struct==null?-1:t.struct,true)+'</select></div><div><label class="f">ستون سرفصل هر ردیف</label><select data-cc="'+id+'">'+o(t.cat==null?-1:t.cat,true)+'</select></div></div>';
+        h+='<div class="grid2"><div><label class="f">ستون جمله‌ی مثال (انگلیسی)</label><select data-ex="'+id+'">'+o(t.ex==null?-1:t.ex,true)+'</select></div><div><label class="f">ستون ترجمه‌ی مثال (فارسی)</label><select data-xf="'+id+'">'+o(t.exfa==null?-1:t.exfa,true)+'</select></div></div>';
+        h+='<div><label class="f">کدام طرف انگلیسی است و خوانده شود</label><select data-sp="'+id+'"><option value="front"'+((t.speak||"front")==="front"?" selected":"")+'>روی کارت</option><option value="back"'+(t.speak==="back"?" selected":"")+'>پشت کارت (جواب)</option></select></div>';
+      }
+      h+='</div>';
+    });
+    h+='</div>';
+  });
+  if(d.sources.length<5)h+='<p><button class="btn" id="add">افزودن شیت ('+fa(d.sources.length)+' از '+fa(5)+')</button></p>';
+  h+='<div class="panel"><h2>اتصال</h2><p class="muted ltr" style="word-break:break-all">'+esc(S.conn.url)+'</p><p style="margin-top:8px"><button class="btn sm" id="chg">تغییر اتصال</button></p></div>';
+  h+='<button class="btn go" id="save" style="width:100%">ذخیره و شروع</button>';
+  app.innerHTML=h;
+  function cnt(){
+    S.cfg.perDay=Math.max(1,Math.min(200,parseInt(document.getElementById("np").value,10)||1));
+    S.cfg.maxNew=Math.max(0,Math.min(200,parseInt(document.getElementById("rp").value,10)||0));
+    S.cfg.rounds=Math.max(1,Math.min(10,parseInt(document.getElementById("rd").value,10)||1));
+    var s=S.prog.session,dy=S.prog.day;if((!s||S.idx===0)&&!(dy&&dy.rounds)){S.prog.session=null;S.prog.day=null;S.idx=0;saveDoc("progress",S.prog)}
+    saveCfgSoon();
+  }
+  document.getElementById("np").oninput=cnt;document.getElementById("rp").oninput=cnt;document.getElementById("rd").oninput=cnt;
+  document.getElementById("ss").onchange=function(){S.cfg.sheetSync=this.checked;saveCfgSoon()};
+  document.getElementById("as").onchange=function(){S.cfg.autoSpeak=this.checked;saveCfgSoon()};
+  var add=document.getElementById("add");
+  if(add)add.onclick=function(){d.sources.push({sid:rid(),input:"",id:"",name:"",tabs:[]});renderSetup()};
+  document.getElementById("save").onclick=saveSetup;
+  document.getElementById("chg").onclick=function(){S.conn=null;try{localStorage.removeItem("lt_conn")}catch(e){}renderConnect()};
+  var q=function(a){return [].slice.call(app.querySelectorAll("["+a+"]"))},pi=function(v){var p=v.split(".");return d.sources[+p[0]].tabs[+p[1]]};
+  q("data-rm").forEach(function(b){b.onclick=function(){d.sources.splice(+b.dataset.rm,1);renderSetup()}});
+  q("data-in").forEach(function(el){el.oninput=function(){d.sources[+el.dataset.in].input=el.value}});
+  q("data-ld").forEach(function(b){b.onclick=function(){loadTabs(+b.dataset.ld,b)}});
+  q("data-tg").forEach(function(el){el.onchange=function(){var p=el.dataset.tg.split("."),t=pi(el.dataset.tg);t.on=el.checked;if(el.checked&&!t.headers)loadHeaders(+p[0],+p[1]);else renderSetup()}});
+  q("data-lb").forEach(function(el){el.oninput=function(){pi(el.dataset.lb).label=el.value}});
+  q("data-fc").forEach(function(el){el.onchange=function(){pi(el.dataset.fc).front=+el.value}});
+  q("data-bc").forEach(function(el){el.onchange=function(){pi(el.dataset.bc).back=+el.value}});
+  q("data-sc").forEach(function(el){el.onchange=function(){var t=pi(el.dataset.sc);t.struct=+el.value;if(t.struct>=0)t.speak="back"}});
+  q("data-cc").forEach(function(el){el.onchange=function(){pi(el.dataset.cc).cat=+el.value}});
+  q("data-ex").forEach(function(el){el.onchange=function(){pi(el.dataset.ex).ex=+el.value}});
+  q("data-xf").forEach(function(el){el.onchange=function(){pi(el.dataset.xf).exfa=+el.value}});
+  q("data-sp").forEach(function(el){el.onchange=function(){pi(el.dataset.sp).speak=el.value}});
+}
+function renderHist(){
+  var D=S.prog.days||{},ks=Object.keys(D).sort().reverse(),h='<div class="panel"><h2>تاریخچه‌ی مرور</h2>';
+  if(S.hist){
+    var d=S.hist,L=S.logs[d];
+    h+='<p><button class="btn sm" id="hb">بازگشت به فهرست</button></p><div class="rh" style="margin-top:4px"><b>'+esc(fdate(d))+'</b></div>';
+    if(L===undefined)h+='<p class="muted">در حال خواندن…</p>';
+    else if(!L||!L.entries.length)h+='<p class="muted">برای این روز موردی ثبت نشده.</p>';
+    else{
+      var cur=0;
+      L.entries.forEach(function(e){
+        if(e.r!==cur){cur=e.r;h+='<div class="rh">دوره '+fa(cur)+(e.rp?' · مرور مجدد':'')+'</div>'}
+        h+='<div class="le"><time>'+esc(e.t)+'</time><span class="'+(e.k?'ok':'no')+'">'+(e.k?'✓':'✗')+'</span><span dir="auto" style="flex:1">'+esc(e.f)+'</span><span class="muted" style="font-size:12px">'+esc(e.l||"")+' · ج'+fa(e.b)+'</span></div>';
+      });
+    }
+    h+='</div>';app.innerHTML=h;
+    document.getElementById("hb").onclick=function(){S.hist=null;renderHist()};
+    return;
+  }
+  if(!ks.length)h+='<p class="muted">هنوز تمرینی ثبت نشده. بعد از اولین تمرین، هر روز اینجا می‌آید.</p>';
+  ks.forEach(function(k){var x=D[k];h+='<button class="hrow" data-d="'+k+'"><span><b>'+esc(fdate(k))+'</b><br><small>'+fa(x.n)+' مرور · '+fa(x.k)+' بلد · '+fa(x.h)+' سخت</small></span><span class="tag">'+fa(x.r)+' دوره</span></button>'});
+  h+='</div>';app.innerHTML=h;
+  [].forEach.call(app.querySelectorAll("[data-d]"),function(el){el.onclick=function(){openDay(el.dataset.d)}});
+}
+function openDay(d){
+  S.hist=d;
+  if(S.logs[d]===undefined&&S.col){
+    renderHist();
+    S.col.doc("log_"+d).get().then(function(g){S.logs[d]=g.exists?g.data():null;if(S.hist===d&&S.view==="hist")renderHist()}).catch(function(){S.logs[d]=null;renderHist()});
+  }else renderHist();
+}
+function loadTabs(i,btn){
+  var s=S.draft.sources[i],id=sheetId(s.input);
+  if(!id){note("لینک یا شناسه‌ی شیت معتبر نیست. لینک کامل را از Google Sheets کپی کن.");return}
+  note("");btn.textContent="در حال خواندن…";
+  call("get_spreadsheet",{spreadsheetId:id,fields:["properties.title","sheets.properties.title"]}).then(function(p){
+    var old={};(s.tabs||[]).forEach(function(t){old[t.title]=t});
+    s.id=id;s.name=(p.properties&&p.properties.title)||"";
+    s.tabs=((p.sheets)||[]).map(function(sh){var t=sh.properties.title;return old[t]||{tid:rid(),title:t,label:t,on:false}});
+    renderSetup();
+  }).catch(function(e){note(errText(e));renderSetup()});
+}
+function loadHeaders(i,j){
+  var s=S.draft.sources[i],t=s.tabs[j];
+  call("get_values",{spreadsheetId:s.id,range:rng(t.title,"A1:Z1")}).then(function(p){
+    var h=((p&&p.values&&p.values[0])||[]).map(function(x){return String(x)});
+    var c=pickCols(h);t.headers=h;t.front=c.front;t.back=c.back;t.struct=c.struct;t.cat=c.cat;t.ex=c.ex;t.exfa=c.exfa;t.speak=c.struct>=0?"back":"front";if(!t.label)t.label=t.title;
+    renderSetup();
+  }).catch(function(e){t.on=false;note(errText(e));renderSetup()});
+}
+function saveSetup(){
+  var d=S.draft,bad=false;
+  d.sources=d.sources.filter(function(s){return s.id});
+  d.sources.forEach(function(s){(s.tabs||[]).forEach(function(t){if(t.on&&!t.headers)bad=true})});
+  if(bad){note("ستون‌های یکی از تب‌ها هنوز خوانده نشده. چند ثانیه صبر کن و دوباره ذخیره کن.");return}
+  if(!d.sources.some(function(s){return s.tabs.some(function(t){return t.on})})){note("حداقل یک تب را انتخاب کن.");return}
+  S.cfg.sources=JSON.parse(JSON.stringify(d.sources));S.draft=null;
+  S.prog.session=null;S.prog.day=null;S.prog.filter=[];S.idx=0;
+  clearTimeout(S.timer);
+  saveDoc("config",S.cfg);saveDoc("progress",S.prog);
+  note("تنظیمات ذخیره شد.",true);
+  S.view="practice";loadCards();
+}
+function go(v){S.view=v;if(v==="setup"&&!S.draft)S.draft=JSON.parse(JSON.stringify(S.cfg));if(v==="practice"&&S.phase==="idle"&&!S.prog.session)S.show=false;note("");render()}
+document.getElementById("nav-p").onclick=function(){go("practice")};
+document.getElementById("nav-s").onclick=function(){go("setup")};
+document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
+
+function applyDocs(c,p,l){
+  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
+  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{}};
+  if(l)S.logs[today()]=l;
+}
+function startCards(){if(S.cfg.sources.length){loadCards()}else{S.view="setup";S.phase="idle";render()}}
+function boot(){
+  if(!S.conn)return;
+  S.col={doc:mkDoc};S.docs.config=mkDoc("config");S.docs.progress=mkDoc("progress");
+  var ld=logDoc(today()),names=["config","progress",ld];
+  var lc=lsGet("lt_doc_config"),lp=lsGet("lt_doc_progress"),ll=lsGet("lt_doc_"+ld),local=!!lc;
+  if(local){applyDocs(lc,lp,ll);S.phase="idle";startCards()}
+  api("boot",{names:names}).then(function(r){
+    var d=r.docs||{},rc=d.config,rp=d.progress,rl=d[ld];
+    var newer=function(a,b){return a&&(!b||(a.ts||0)>(b.ts||0))};
+    var useC=newer(rc,lc),useP=newer(rp,lp),useL=newer(rl,ll);
+    if(useC)lsSet("lt_doc_config",rc);if(useP)lsSet("lt_doc_progress",rp);if(useL)lsSet("lt_doc_"+ld,rl);
+    if(!local){applyDocs(rc,rp,rl);S.phase="idle";startCards();return}
+    if((useC||useP||useL)&&!S.touched){applyDocs(useC?rc:null,useP?rp:null,useL?rl:null);if(useC)startCards();else render()}
+  }).catch(function(e){
+    if(local){note("به شیت وصل نشد؛ با نسخه‌ی ذخیره‌شده‌ی گوشی ادامه می‌دهی و بعداً همگام می‌شود.");return}
+    S.phase="idle";app.innerHTML='<div class="panel"><h2>اتصال برقرار نشد</h2><p class="muted">'+esc(errText(e))+'</p><p style="margin-top:12px"><button class="btn go" id="rt">تلاش دوباره</button> <button class="btn sm" id="rc">تغییر اتصال</button></p></div>';
+    document.getElementById("rt").onclick=function(){S.phase="boot";render();boot()};
+    document.getElementById("rc").onclick=function(){S.conn=null;try{localStorage.removeItem("lt_conn")}catch(x){}renderConnect()}
+  });
+}
+S.conn=getConn();
+render();
+boot();
+})();
+</script>
+</body>
+</html>
