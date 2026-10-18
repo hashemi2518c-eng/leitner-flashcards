@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Leitner Flashcards</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1a3269"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Vazirmatn:wght@400;500&display=swap">
+<meta name="referrer" content="no-referrer"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Vazirmatn:wght@400;500&display=swap">
 <style>
 /* Layout: brand header with logo, then one working column. Practice shows a card with its heading, structure and answer; Setup maps sheet columns. */
 :root{
@@ -95,6 +95,7 @@ svg.ic{width:18px;height:18px;flex:none}
 .le time{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums;flex:none}
 .le .ok{color:var(--acc-ink)}.le .no{color:var(--hard-ink)}
 .rh{font-size:13px;color:var(--ink2);margin:12px 0 2px}
+.bar{flex-wrap:wrap}.nav{flex:1 1 100%;order:3}.nav .chip{flex:1;padding:0 6px}.ar{display:flex;gap:8px;margin-top:12px}.ar .btn{flex:1}.aen{font-family:var(--font-en);font-size:26px;line-height:1.35;font-weight:500;text-align:center;direction:ltr}.afa{font-size:22px;text-align:center;color:var(--acc-ink);margin-top:10px}.aex{font-size:13px;color:var(--ink2);text-align:center;margin-top:10px;direction:ltr}
 </style>
 </head>
 <body>
@@ -105,6 +106,7 @@ svg.ic{width:18px;height:18px;flex:none}
     <div class="ttl"><h1>فلش‌کارت لایتنر</h1><small id="sub">Leitner · daily practice</small></div>
     <nav class="nav">
       <button class="chip" id="nav-p" aria-pressed="true">تمرین</button>
+      <button class="chip" id="nav-a" aria-pressed="false">مرور خودکار</button>
       <button class="chip" id="nav-h" aria-pressed="false">تاریخچه</button>
       <button class="chip" id="nav-s" aria-pressed="false">تنظیمات</button>
     </nav>
@@ -116,7 +118,7 @@ svg.ic{width:18px;height:18px;flex:none}
 <script>
 (function(){
 var SERVER="Google Sheets",INT={1:1,2:2,3:4,4:7,5:14};
-var S={view:"practice",cfg:{perDay:10,maxNew:0,rounds:1,sheetSync:true,autoSpeak:true,sources:[]},prog:{p:{},session:null,filter:[],day:null,days:{}},logs:{},hist:null,col:null,sq:{},dirty:{},logBuf:{},tabsOk:{},syncT:null,syncErr:false,cards:[],phase:"boot",idx:0,show:false,mcp:null,uid:null,docs:{},q:{},draft:null,loadErr:null,timer:null};
+var S={view:"practice",cfg:{perDay:10,maxNew:0,rounds:1,autoDays:3,sheetSync:true,autoSpeak:true,sources:[]},prog:{p:{},session:null,filter:[],day:null,days:{}},logs:{},hist:null,col:null,sq:{},dirty:{},logBuf:{},tabsOk:{},syncT:null,syncErr:false,cards:[],phase:"boot",idx:0,show:false,mcp:null,uid:null,docs:{},q:{},draft:null,loadErr:null,timer:null};
 var app=document.getElementById("app"),msg=document.getElementById("msg");
 var ICON='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -395,9 +397,11 @@ function render(){
   document.getElementById("nav-p").setAttribute("aria-pressed",S.view==="practice");
   document.getElementById("nav-s").setAttribute("aria-pressed",S.view==="setup");
   document.getElementById("nav-h").setAttribute("aria-pressed",S.view==="hist");
+  document.getElementById("nav-a").setAttribute("aria-pressed",S.view==="auto");
   document.getElementById("sub").textContent=new Date().toLocaleDateString("fa-IR",{weekday:"long",day:"numeric",month:"long"});
   if(S.view==="setup")return renderSetup();
   if(S.view==="hist")return renderHist();
+  if(S.view==="auto")return renderAuto();
   renderPractice();
 }
 function renderPractice(){
@@ -477,7 +481,7 @@ function renderPractice(){
 
 function renderSetup(){
   var d=S.draft||(S.draft=JSON.parse(JSON.stringify(S.cfg))),h="";
-  h+='<div class="panel"><h2>تعداد روزانه</h2><div class="grid2"><div><label class="f" for="np">تعداد کل کارت در روز</label><input type="number" id="np" min="1" max="200" value="'+S.cfg.perDay+'"></div><div><label class="f" for="rp">سقف کارت جدید در روز (۰ = بقیه‌ی تعداد کل با جدید پر شود)</label><input type="number" id="rp" min="0" max="200" value="'+S.cfg.maxNew+'"></div></div><div style="margin-top:12px"><label class="f" for="rd">تعداد دوره در روز (هر دوره یک بار مرور کامل کارت‌های امروز)</label><input type="number" id="rd" min="1" max="10" value="'+(S.cfg.rounds||1)+'"></div><p class="muted" style="margin-top:8px">اول کارت‌های مرورِ سررسیدشده می‌آیند و بقیه‌ی تعداد کل با کارت جدید پر می‌شود.</p>';
+  h+='<div class="panel"><h2>تعداد روزانه</h2><div class="grid2"><div><label class="f" for="np">تعداد کل کارت در روز</label><input type="number" id="np" min="1" max="200" value="'+S.cfg.perDay+'"></div><div><label class="f" for="rp">سقف کارت جدید در روز (۰ = بقیه‌ی تعداد کل با جدید پر شود)</label><input type="number" id="rp" min="0" max="200" value="'+S.cfg.maxNew+'"></div></div><div style="margin-top:12px"><label class="f" for="rd">تعداد دوره در روز (هر دوره یک بار مرور کامل کارت‌های امروز)</label><input type="number" id="rd" min="1" max="10" value="'+(S.cfg.rounds||1)+'"></div><div style="margin-top:12px"><label class="f" for="ad">مرور خودکار: چند روز اخیر (به‌علاوه‌ی امروز)</label><input type="number" id="ad" min="0" max="30" value="'+(S.cfg.autoDays==null?3:S.cfg.autoDays)+'"></div><p class="muted" style="margin-top:8px">اول کارت‌های مرورِ سررسیدشده می‌آیند و بقیه‌ی تعداد کل با کارت جدید پر می‌شود.</p>';
   h+='<label class="tabhead" style="margin-top:12px"><input type="checkbox" id="as"'+(S.cfg.autoSpeak?" checked":"")+'><span>پخش خودکار تلفظ</span></label><label class="tabhead" style="margin-top:8px"><input type="checkbox" id="ss"'+(S.cfg.sheetSync!==false?" checked":"")+'><span>ذخیره‌ی جعبه‌ها و تاریخچه در خود Google Sheet (تب‌های Leitner_Box و Leitner_Log)</span></label><p class="muted" style="margin-top:8px">تعداد با تغییر همین‌جا اعمال می‌شود و تمرین امروزِ شروع‌نشده دوباره ساخته می‌شود.</p></div>';
   d.sources.forEach(function(s,i){
     h+='<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">'+esc(s.name||("منبع "+fa(i+1)))+'</h2><button class="btn sm" data-rm="'+i+'">حذف</button></div>';
@@ -508,7 +512,7 @@ function renderSetup(){
     var s=S.prog.session,dy=S.prog.day;if((!s||S.idx===0)&&!(dy&&dy.rounds)){S.prog.session=null;S.prog.day=null;S.idx=0;saveDoc("progress",S.prog)}
     saveCfgSoon();
   }
-  document.getElementById("np").oninput=cnt;document.getElementById("rp").oninput=cnt;document.getElementById("rd").oninput=cnt;
+  document.getElementById("np").oninput=cnt;document.getElementById("rp").oninput=cnt;document.getElementById("rd").oninput=cnt;document.getElementById("ad").oninput=function(){var v=parseInt(this.value,10);S.cfg.autoDays=Math.max(0,Math.min(30,isNaN(v)?3:v));saveCfgSoon()};
   document.getElementById("ss").onchange=function(){S.cfg.sheetSync=this.checked;saveCfgSoon()};
   document.getElementById("as").onchange=function(){S.cfg.autoSpeak=this.checked;saveCfgSoon()};
   var add=document.getElementById("add");
@@ -559,6 +563,140 @@ function openDay(d){
     S.col.doc("log_"+d).get().then(function(g){S.logs[d]=g.exists?g.data():null;if(S.hist===d&&S.view==="hist")renderHist()}).catch(function(){S.logs[d]=null;renderHist()});
   }else renderHist();
 }
+/* ---- Auto review: listen-only; never changes boxes or progress ---- */
+S.auto={st:"idle",list:[],i:0,clips:{},run:0,msg:"",prep:0,total:0,cur:null,wl:null};
+function dayRange(){var n=S.cfg.autoDays==null?3:S.cfg.autoDays,t=today(),a=[];for(var k=n;k>=0;k--)a.push(addDays(t,-k));return a}
+function loadRangeLogs(days){
+  var t=today(),out={},names=days.filter(function(d){return d!==t}).map(function(d){return "log_"+d});
+  if(S.logs[t])out[t]=S.logs[t];
+  var p=names.length?api("boot",{names:names}).then(function(r){return r.docs||{}}).catch(function(){return {}}):Promise.resolve({});
+  return p.then(function(docs){days.forEach(function(d){if(d===t)return;var x=docs["log_"+d]||lsGet("lt_doc_log_"+d);if(x)out[d]=x});return out});
+}
+function buildAutoList(){
+  var days=dayRange();
+  return loadRangeLogs(days).then(function(L){
+    var seen={},list=[];
+    days.forEach(function(d){var l=L[d];if(!l||!l.entries)return;l.entries.forEach(function(e){if(seen[e.id])return;var c=byId(e.id);if(!c)return;seen[e.id]=1;list.push(c)})});
+    return list.length>100?list.slice(list.length-100):list;
+  });
+}
+function autoItem(c){
+  var eng=c.speak==="back"?c.back:c.front;
+  var f=(c.speak==="back"||c.struct)?"":c.back.replace(/\s*[\/؛]\s*/g,"، ");
+  return {c:c,en:eng.slice(0,220),fa:f.slice(0,180)};
+}
+function ttsUrl(t,l){return "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl="+l+"&q="+encodeURIComponent(t)}
+function loadClip(url){
+  return new Promise(function(res){
+    var a=new Audio(),done=false,tm;
+    function fin(v){if(done)return;done=true;clearTimeout(tm);res(v)}
+    a.preload="auto";
+    ["canplaythrough","canplay","loadeddata"].forEach(function(ev){a.addEventListener(ev,function(){fin(a)},{once:true})});
+    a.addEventListener("error",function(){fin(null)},{once:true});
+    tm=setTimeout(function(){fin(a)},3500);
+    a.src=url;try{a.load()}catch(e){fin(null)}
+  });
+}
+function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function stopSound(){try{speechSynthesis.cancel()}catch(e){}var A=S.auto;if(A.cur){try{A.cur.pause()}catch(e){}A.cur=null}}
+function playClip(a){
+  return new Promise(function(res){
+    if(!a){res();return}
+    var done=false,A=S.auto;function fin(){if(done)return;done=true;a.onended=null;a.onerror=null;res()}
+    a.onended=fin;a.onerror=fin;A.cur=a;
+    try{a.currentTime=0}catch(e){}
+    var p;try{p=a.play()}catch(e){fin();return}
+    if(p&&p.catch)p.catch(fin);
+    setTimeout(fin,15000);
+  });
+}
+function sayEn(it){
+  if(typeof SpeechSynthesisUtterance!=="undefined"&&window.speechSynthesis){
+    return new Promise(function(res){
+      var u=new SpeechSynthesisUtterance(it.en),done=false;
+      u.lang="en-US";u.rate=.9;var v=pickVoice();if(v)u.voice=v;
+      function fin(){if(done)return;done=true;res()}
+      u.onend=fin;u.onerror=fin;setTimeout(fin,14000);
+      try{speechSynthesis.cancel();speechSynthesis.resume();speechSynthesis.speak(u)}catch(e){fin()}
+    });
+  }
+  return playClip(S.auto.clips["en|"+it.en]);
+}
+function keepAwake(){try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(function(l){S.auto.wl=l}).catch(function(){})}catch(e){}}
+function freeAwake(){try{if(S.auto.wl){S.auto.wl.release();S.auto.wl=null}}catch(e){}}
+function step(run){
+  var A=S.auto;if(run!==A.run||A.st!=="play")return;
+  if(A.i>=A.list.length){finishAuto();return}
+  var it=A.list[A.i];renderAuto();
+  sayEn(it).then(function(){if(run!==A.run)return;return wait(900)})
+  .then(function(){if(run!==A.run)return;return it.fa?playClip(A.clips["fa|"+it.fa]):wait(300)})
+  .then(function(){if(run!==A.run)return;return wait(1400)})
+  .then(function(){if(run!==A.run)return;A.i++;step(run)});
+}
+function finishAuto(){var A=S.auto;A.run++;stopSound();A.st="done";freeAwake();renderAuto()}
+function stopAuto(){var A=S.auto;A.run++;stopSound();A.st="idle";A.msg="";freeAwake();if(S.view==="auto")renderAuto()}
+function pauseAuto(){var A=S.auto;if(A.st!=="play")return;A.run++;stopSound();A.st="pause";renderAuto()}
+function resumeAuto(){var A=S.auto;if(A.st!=="pause")return;A.st="play";step(A.run)}
+function jumpAuto(d){
+  var A=S.auto;if(A.st!=="play"&&A.st!=="pause")return;
+  A.run++;stopSound();A.i=Math.max(0,Math.min(A.list.length-1,A.i+d));
+  if(A.st==="play")step(A.run);else renderAuto();
+}
+function startAuto(){
+  var A=S.auto;A.run++;var run=A.run;stopSound();
+  A.st="prep";A.msg="";A.list=[];A.i=0;A.clips={};A.prep=0;A.total=0;renderAuto();
+  buildAutoList().then(function(cards){
+    if(run!==A.run)return;
+    if(!cards.length){A.st="idle";A.msg="در این بازه کارتی مرور نشده است. اول در «تمرین» چند کارت کار کن.";renderAuto();return}
+    A.list=cards.map(autoItem);
+    var noSpeech=typeof SpeechSynthesisUtterance==="undefined"||!window.speechSynthesis,seen={},u=[];
+    A.list.forEach(function(it){
+      if(it.fa&&!seen["fa|"+it.fa]){seen["fa|"+it.fa]=1;u.push(["fa",it.fa])}
+      if(noSpeech&&!seen["en|"+it.en]){seen["en|"+it.en]=1;u.push(["en",it.en])}
+    });
+    A.total=u.length;renderAuto();
+    var failed=0;
+    return u.reduce(function(p,n,idx){
+      return p.then(function(){
+        if(run!==A.run)return;
+        return loadClip(ttsUrl(n[1],n[0])).then(function(a){A.clips[n[0]+"|"+n[1]]=a;if(!a)failed++;A.prep=idx+1;if(S.view==="auto")renderAuto()});
+      });
+    },Promise.resolve()).then(function(){
+      if(run!==A.run)return;
+      if(u.length&&failed===u.length)A.msg=navigator.onLine?"صدای فارسی از گوگل گرفته نشد؛ فقط انگلیسی پخش می‌شود و ترجمه روی صفحه می‌آید.":"اینترنت نیست؛ فقط انگلیسی پخش می‌شود و ترجمه روی صفحه می‌آید.";
+      else if(failed)A.msg=fa(failed)+" صدای فارسی گرفته نشد و رد می‌شود.";
+      A.st="play";keepAwake();step(run);
+    });
+  }).catch(function(){if(run!==A.run)return;A.st="idle";A.msg="مرور خودکار شروع نشد. دوباره امتحان کن.";renderAuto()});
+}
+function renderAuto(){
+  if(S.view!=="auto")return;
+  var A=S.auto,n=S.cfg.autoDays==null?3:S.cfg.autoDays,h='<div class="panel"><h2>مرور خودکار</h2>';
+  if(A.msg)h+='<div class="msg">'+esc(A.msg)+'</div>';
+  if(A.st==="idle"||A.st==="done"){
+    h+='<p class="muted">کلماتی که در '+fa(n)+' روز اخیر و امروز مرور کرده‌ای، پشت‌سرهم و بدون دست زدن پخش می‌شوند: اول انگلیسی، بعد ترجمه‌ی فارسی. این فقط گوش دادن است و جعبه‌ها تغییر نمی‌کنند. تعداد روز را در تنظیمات عوض کن.</p>';
+    if(A.st==="done")h+='<div class="msg ok">مرور تمام شد.</div>';
+    h+='<p style="margin-top:12px"><button class="btn go" id="a-start" style="width:100%">'+(A.st==="done"?'پخش دوباره':'شروع مرور')+'</button></p>';
+  }else if(A.st==="prep"){
+    h+='<p class="muted">در حال آماده‌سازی صدای فارسی'+(A.total?': '+fa(A.prep)+' از '+fa(A.total):'')+'…</p><div class="prog"><i style="width:'+(A.total?Math.round(100*A.prep/A.total):5)+'%"></i></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">لغو</button></p>';
+  }else{
+    var it=A.list[Math.min(A.i,A.list.length-1)];
+    h+='<div class="prog"><i style="width:'+Math.round(100*(A.i+1)/A.list.length)+'%"></i></div>';
+    h+='<p class="muted" style="text-align:center">'+fa(A.i+1)+' از '+fa(A.list.length)+' · '+esc(it.c.label)+(A.st==="pause"?' · متوقف':'')+'</p>';
+    h+='<div class="aen" dir="ltr">'+esc(it.en)+'</div>';
+    if(it.fa)h+='<div class="afa" dir="rtl">'+esc(it.fa)+'</div>';
+    if(it.c.ex)h+='<div class="aex">'+esc(it.c.ex)+'</div>';
+    h+='<div class="ar"><button class="btn" id="a-prev">قبلی</button><button class="btn go" id="a-pp">'+(A.st==="pause"?'ادامه':'توقف موقت')+'</button><button class="btn" id="a-next">بعدی</button></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">پایان</button></p>';
+  }
+  h+='</div>';app.innerHTML=h;
+  var g=function(i){return document.getElementById(i)};
+  if(g("a-start"))g("a-start").onclick=startAuto;
+  if(g("a-stop"))g("a-stop").onclick=stopAuto;
+  if(g("a-pp"))g("a-pp").onclick=function(){if(A.st==="pause")resumeAuto();else pauseAuto()};
+  if(g("a-prev"))g("a-prev").onclick=function(){jumpAuto(-1)};
+  if(g("a-next"))g("a-next").onclick=function(){jumpAuto(1)};
+}
+
 function loadTabs(i,btn){
   var s=S.draft.sources[i],id=sheetId(s.input);
   if(!id){note("لینک یا شناسه‌ی شیت معتبر نیست. لینک کامل را از Google Sheets کپی کن.");return}
@@ -591,13 +729,14 @@ function saveSetup(){
   note("تنظیمات ذخیره شد.",true);
   S.view="practice";loadCards();
 }
-function go(v){S.view=v;if(v==="setup"&&!S.draft)S.draft=JSON.parse(JSON.stringify(S.cfg));if(v==="practice"&&S.phase==="idle"&&!S.prog.session)S.show=false;note("");render()}
+function go(v){if(S.view==="auto"&&v!=="auto"&&S.auto)stopAuto();S.view=v;if(v==="setup"&&!S.draft)S.draft=JSON.parse(JSON.stringify(S.cfg));if(v==="practice"&&S.phase==="idle"&&!S.prog.session)S.show=false;note("");render()}
 document.getElementById("nav-p").onclick=function(){go("practice")};
 document.getElementById("nav-s").onclick=function(){go("setup")};
+document.getElementById("nav-a").onclick=function(){go("auto")};
 document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
-  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
+  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
   if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{}};
   if(l)S.logs[today()]=l;
 }
