@@ -307,8 +307,15 @@ function loadCards(){
   api("cards",{reqs:list.map(function(q){return {id:q.s.id,tab:q.t.title}})}).then(function(r){
     var bad=r.results.filter(function(x){return x.error});
     if(bad.length&&bad.length===r.results.length)throw {code:"tool_error",message:bad[0].error};
+    var chg=false;
+    r.results.forEach(function(x,k){
+      var t=list[k].t,h=((x&&x.values&&x.values[0])||[]).map(function(v){return String(v)});
+      if(!h.length)return;
+      if(JSON.stringify(h)!==JSON.stringify(t.headers||[])){t.headers=h;chg=true;var c=pickCols(h);if(!(t.ex>=0)&&c.ex>=0)t.ex=c.ex;if(!(t.exfa>=0)&&c.exfa>=0)t.exfa=c.exfa}
+    });
+    if(chg){S.draft=null;saveDoc("config",S.cfg)}
     var cards=buildCards(r.results,list);
-    lsSet("lt_cards",{sig:sig,cards:cards});
+    lsSet("lt_cards",{sig:cardSig(),cards:cards});
     var changed=!hit||JSON.stringify(cards)!==JSON.stringify(S.cards);
     S.cards=cards;S.loadErr=null;
     if(!hit){S.phase="idle";restoreSession()}
