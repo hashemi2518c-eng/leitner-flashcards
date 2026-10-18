@@ -696,7 +696,7 @@ function mixStart(run){
         var a=new Audio(b64blob(r.file));a.preload="auto";
         files.push({a:a,marks:marks,s:list.length});list=list.concat(keep);
         A.prep++;if(S.view==="auto")renderAuto();
-      },function(e){bad=true;if(e&&e.code==="tool_error"&&/unknown action/.test(e.message||""))A.needScript=true});
+      },function(e){bad=true;if(e&&e.code==="tool_error"&&/unknown action/.test(e.message||""))A.needScript=true;else A.err=String(e&&e.message||e&&e.code||e).slice(0,240)});
     });
   },Promise.resolve()).then(function(){
     if(run!==A.run)return true;
@@ -720,7 +720,7 @@ function mixStart(run){
 }
 function startAuto(){
   var A=S.auto;A.run++;var run=A.run;stopSound();
-  A.st="prep";A.msg="";A.needScript=false;A.mix=false;A.files=null;A.list=[];A.i=0;A.clips={};A.prep=0;A.total=0;renderAuto();
+  A.st="prep";A.msg="";A.needScript=false;A.err="";A.mix=false;A.files=null;A.list=[];A.i=0;A.clips={};A.prep=0;A.total=0;renderAuto();
   buildAutoList().then(function(cards){
     if(run!==A.run)return;
     if(!cards.length){A.st="idle";A.msg="در این بازه کارتی مرور نشده است. اول در «تمرین» چند کارت کار کن.";renderAuto();return}
@@ -748,7 +748,7 @@ function startAuto(){
     },Promise.resolve()).then(function(){return u});
     }).then(function(u){
       if(run!==A.run)return;
-      if(u.length&&failed===u.length)A.msg=navigator.onLine?"صدای فارسی از گوگل گرفته نشد؛ فقط انگلیسی پخش می‌شود و ترجمه روی صفحه می‌آید.":"اینترنت نیست؛ فقط انگلیسی پخش می‌شود و ترجمه روی صفحه می‌آید.";
+      if(A.err&&u.length&&failed===u.length)A.msg="پاسخ اسکریپت: "+A.err;else if(u.length&&failed===u.length)A.msg=navigator.onLine?"صدای فارسی از گوگل گرفته نشد؛ فقط انگلیسی پخش می‌شود و ترجمه روی صفحه می‌آید.":"اینترنت نیست؛ فقط انگلیسی پخش می‌شود و ترجمه روی صفحه می‌آید.";
       else if(failed)A.msg=fa(failed)+" صدای فارسی گرفته نشد و رد می‌شود.";
       A.st="play";keepAwake();step(run);
     });
