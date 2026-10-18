@@ -635,7 +635,7 @@ function step(run){
   if(A.i>=A.list.length){finishAuto();return}
   var it=A.list[A.i];renderAuto();
   sayEn(it).then(function(){if(run!==A.run)return;return wait(900)})
-  .then(function(){if(run!==A.run)return;if(!it.fa)return wait(300);var c=A.clips["fa|"+it.fa];if(c)return playClip(c);var v=faVoice();if(v&&window.speechSynthesis)return new Promise(function(res){var u=new SpeechSynthesisUtterance(it.fa);u.lang="fa-IR";u.voice=v;u.onend=u.onerror=function(){res()};setTimeout(res,12000);try{speechSynthesis.speak(u)}catch(e){res()}});return wait(300)})
+  .then(function(){if(run!==A.run)return;return wait(it.fa?2600:300)})
   .then(function(){if(run!==A.run)return;return wait(1400)})
   .then(function(){if(run!==A.run)return;A.i++;step(run)});
 }
@@ -725,6 +725,7 @@ function startAuto(){
     if(run!==A.run)return;
     if(!cards.length){A.st="idle";A.msg="در این بازه کارتی مرور نشده است. اول در «تمرین» چند کارت کار کن.";renderAuto();return}
     A.list=cards.map(autoItem);
+    A.msg="";A.st="play";keepAwake();step(run);return;
     return mixStart(run).then(function(done){
     if(done||run!==A.run)return;
     var noSpeech=typeof SpeechSynthesisUtterance==="undefined"||!window.speechSynthesis,seen={},u=[];
@@ -760,7 +761,7 @@ function renderAuto(){
   var A=S.auto,n=S.cfg.autoDays==null?3:S.cfg.autoDays,h='<div class="panel"><h2>مرور خودکار</h2>';
   if(A.msg)h+='<div class="msg">'+esc(A.msg)+'</div>';
   if(A.st==="idle"||A.st==="done"){
-    h+='<p class="muted">کلماتی که در '+fa(n)+' روز اخیر و امروز مرور کرده‌ای، پشت‌سرهم و بدون دست زدن پخش می‌شوند: اول انگلیسی، بعد ترجمه‌ی فارسی. این فقط گوش دادن است و جعبه‌ها تغییر نمی‌کنند. تعداد روز را در تنظیمات عوض کن.</p>';
+    h+='<p class="muted">کلماتی که در '+fa(n)+' روز اخیر و امروز مرور کرده‌ای، پشت‌سرهم و بدون دست زدن پخش می‌شوند: انگلیسی خوانده می‌شود و ترجمه‌ی فارسی روی صفحه می‌آید. این فقط گوش دادن است و جعبه‌ها تغییر نمی‌کنند. تعداد روز را در تنظیمات عوض کن.</p>';
     if(A.st==="done")h+='<div class="msg ok">مرور تمام شد.</div>';
     h+='<p style="margin-top:12px"><button class="btn go" id="a-start" style="width:100%">'+(A.st==="done"?'پخش دوباره':'شروع مرور')+'</button></p>';
   }else if(A.st==="prep"){
