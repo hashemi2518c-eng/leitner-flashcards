@@ -95,7 +95,7 @@ svg.ic{width:18px;height:18px;flex:none}
 .le time{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums;flex:none}
 .le .ok{color:var(--acc-ink)}.le .no{color:var(--hard-ink)}
 .rh{font-size:13px;color:var(--ink2);margin:12px 0 2px}
-.bar{flex-wrap:wrap}.nav{flex:1 1 100%;order:3}.nav .chip{flex:1;padding:0 6px}.ar{display:flex;gap:8px;margin-top:12px}.ar .btn{flex:1}.aen{font-family:var(--font-en);font-size:26px;line-height:1.35;font-weight:500;text-align:center;direction:ltr}.afa{font-size:22px;text-align:center;color:var(--acc-ink);margin-top:10px}.aex{font-size:13px;color:var(--ink2);text-align:center;margin-top:10px;direction:ltr}
+.bar{flex-wrap:wrap}.nav{flex:1 1 100%;order:3}.nav .chip{flex:1;padding:0 6px}.ar{display:flex;gap:8px;margin-top:12px}.ar .btn{flex:1}.sp[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}.aen{font-family:var(--font-en);font-size:26px;line-height:1.35;font-weight:500;text-align:center;direction:ltr}.afa{font-size:22px;text-align:center;color:var(--acc-ink);margin-top:10px}.aex{font-size:13px;color:var(--ink2);text-align:center;margin-top:10px;direction:ltr}
 </style>
 </head>
 <body>
@@ -118,7 +118,7 @@ svg.ic{width:18px;height:18px;flex:none}
 <script>
 (function(){
 var SERVER="Google Sheets",INT={1:1,2:2,3:4,4:7,5:14};
-var S={view:"practice",cfg:{perDay:10,maxNew:0,rounds:1,autoDays:3,sheetSync:true,autoSpeak:true,sources:[]},prog:{p:{},session:null,filter:[],day:null,days:{}},logs:{},hist:null,col:null,sq:{},dirty:{},logBuf:{},tabsOk:{},syncT:null,syncErr:false,cards:[],phase:"boot",idx:0,show:false,mcp:null,uid:null,docs:{},q:{},draft:null,loadErr:null,timer:null};
+var S={view:"practice",cfg:{perDay:10,maxNew:0,rounds:1,autoDays:3,reverse:false,speedLv:2,sheetSync:true,autoSpeak:true,sources:[]},prog:{p:{},session:null,filter:[],day:null,days:{}},logs:{},hist:null,col:null,sq:{},dirty:{},logBuf:{},tabsOk:{},syncT:null,syncErr:false,cards:[],phase:"boot",idx:0,show:false,mcp:null,uid:null,docs:{},q:{},draft:null,loadErr:null,timer:null};
 var app=document.getElementById("app"),msg=document.getElementById("msg");
 var ICON='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -376,8 +376,10 @@ function startRepeat(){
   saveDoc("progress",S.prog);S.phase="card";render();autoFront();
 }
 function cur(){var s=S.prog.session;return s&&s.ids&&S.idx<s.ids.length?byId(s.ids[S.idx]):null}
-function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="front")speak(c.front)}
-function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="back")speak(c.back)}
+function isRev(c){return !!S.cfg.reverse&&!!c&&!c.struct&&c.speak!=="back"}
+function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="front"&&!isRev(c))speak(c.front)}
+function toggleRev(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderPractice();var c=cur();if(S.phase==="card"&&c&&!S.show)autoFront();if(S.phase==="card"&&c&&S.show&&isRev(c)&&S.cfg.autoSpeak)speak(c.front)}
+function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="back")speak(c.back);else if(c&&S.cfg.autoSpeak&&isRev(c))speak(c.front)}
 function answer(known){
   var s=S.prog.session,id=s.ids[S.idx],x=S.prog.p[id],box,c=byId(id);
   var td=today(),base=x?(x[2]===td?x[3]:x[0]):0;
@@ -415,24 +417,27 @@ function renderPractice(){
   if(S.loadErr)h+='<div class="msg">'+esc(S.loadErr)+'</div>';
   var s=S.prog.session,t=today(),c=cur();
   if(S.phase==="card"&&c){
-    var x=S.prog.p[c.id],ex=!!c.struct,txt=c.speak==="back"?c.back:c.front;
+    var x=S.prog.p[c.id],ex=!!c.struct,rv=isRev(c),txt=c.speak==="back"?c.back:c.front;
     h+='<div class="prog"><i style="width:'+Math.round(100*S.idx/s.ids.length)+'%"></i></div>';
     h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+(s.early?'<span class="tag cat">مرور جعبه‌ها</span>':s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span></div>';
     h+='<div class="cb'+(ex?' ex':'')+'">';
-    h+='<div><div class="lab">'+(ex?'Question':'Say it in English')+'</div><div class="q" dir="auto">'+esc(c.front)+'</div></div>';
+    h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?c.back:c.front)+'</div></div>';
     if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
-    h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
+    if(!rv)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
     if(S.show){
-      if(ex||c.speak==="back")h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(c.back)+'</div></div>';
+      if(rv)h+='<div><div class="lab">English</div><div class="blk ans en" dir="ltr" style="font-size:22px;text-align:center">'+esc(c.front)+'</div></div><div>'+'<button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
+      else if(ex||c.speak==="back")h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(c.back)+'</div></div>';
       else h+='<div class="back" dir="auto">'+esc(c.back)+'</div>';
       if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start"><div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'')+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال</span></button></div></div>';
     }
     h+='</div></div>';
+    h+='<p style="margin:12px 0 0;text-align:center"><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">حالت برعکس (فارسی ← انگلیسی): '+(S.cfg.reverse?"روشن":"خاموش")+'</button></p>';
     if(!S.show)h+='<button class="btn go" id="rev" style="width:100%">نمایش پاسخ</button>';
     else h+='<div class="grid2"><button class="btn hard" id="no">سخت بود</button><button class="btn known" id="yes">بلد بودم</button></div>';
     app.innerHTML=h;
-    document.getElementById("spk").onclick=function(){speak(txt,true)};
+    var sk=document.getElementById("spk");if(sk)sk.onclick=function(){speak(rv?c.front:txt,true)};
     var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
+    var rt=document.getElementById("rvt");if(rt)rt.onclick=toggleRev;
     var r=document.getElementById("rev");if(r)r.onclick=reveal;
     var y=document.getElementById("yes");if(y){y.onclick=function(){answer(true)};document.getElementById("no").onclick=function(){answer(false)}}
     return;
@@ -461,12 +466,14 @@ function renderPractice(){
     h+='<div class="lab">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه</button>'+tabs.map(function(tb){return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+'</button>'}).join("")+'</div>';
   }
   var total=nd+nn,resume=s&&s.date===t&&S.idx>0&&S.idx<(s.ids||[]).length;
+  h+='<p style="margin:12px 0 0"><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">حالت برعکس (فارسی ← انگلیسی): '+(S.cfg.reverse?"روشن":"خاموش")+'</button></p>';
   if(!finished)h+=(total||resume)?'<button class="btn go" id="start" style="width:100%">'+(resume?'ادامه تمرین':'شروع تمرین')+'</button>':'<p class="muted">امروز کارتی برای مرور نیست.</p>';
   if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
   var bc=boxCounts(),mx=Math.max.apply(null,bc.concat([1])),days=[1,2,4,7,14];
   h+='<div class="boxes" aria-label="Leitner boxes">'+bc.map(function(v,i){return '<div class="bx"><b>'+fa(v)+'</b><i style="height:'+Math.max(4,Math.round(48*v/mx))+'px;background:var(--bar'+(i+1)+')"></i>جعبه '+fa(i+1)+'<br>'+fa(days[i])+' روز</div>'}).join("")+'</div>';
   h+='</div>';
   app.innerHTML=h;
+  var rt0=document.getElementById("rvt");if(rt0)rt0.onclick=toggleRev;
   var b=document.getElementById("start");if(b)b.onclick=startSession;
   var ag=document.getElementById("again");if(ag)ag.onclick=startRepeat;
   var eb=document.getElementById("early");if(eb)eb.onclick=startEarly;
@@ -620,7 +627,7 @@ function sayEn(it){
   if(typeof SpeechSynthesisUtterance!=="undefined"&&window.speechSynthesis){
     return new Promise(function(res){
       var u=new SpeechSynthesisUtterance(it.en),done=false;
-      u.lang="en-US";u.rate=.9;var v=pickVoice();if(v)u.voice=v;
+      u.lang="en-US";u.rate=[.8,.9,1,1.1][(S.cfg.speedLv>=1&&S.cfg.speedLv<=4?S.cfg.speedLv:2)-1];var v=pickVoice();if(v)u.voice=v;
       function fin(){if(done)return;done=true;res()}
       u.onend=fin;u.onerror=fin;setTimeout(fin,14000);
       try{speechSynthesis.cancel();speechSynthesis.resume();speechSynthesis.speak(u)}catch(e){fin()}
@@ -630,13 +637,15 @@ function sayEn(it){
 }
 function keepAwake(){try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(function(l){S.auto.wl=l}).catch(function(){})}catch(e){}}
 function freeAwake(){try{if(S.auto.wl){S.auto.wl.release();S.auto.wl=null}}catch(e){}}
+function spd(){return [1.6,1,.65,.4][(S.cfg.speedLv>=1&&S.cfg.speedLv<=4?S.cfg.speedLv:2)-1]}
+function speedRow(){var l=S.cfg.speedLv>=1&&S.cfg.speedLv<=4?S.cfg.speedLv:2,h='<div class="lab" style="margin-top:14px">سرعت (۱ آهسته ← ۴ سریع)</div><div class="ar" style="margin-top:6px">';for(var i=1;i<=4;i++)h+='<button class="btn sp" data-lv="'+i+'" aria-pressed="'+(l===i)+'">'+fa(i)+'</button>';return h+'</div>'}
 function step(run){
   var A=S.auto;if(run!==A.run||A.st!=="play")return;
   if(A.i>=A.list.length){finishAuto();return}
   var it=A.list[A.i];renderAuto();
-  sayEn(it).then(function(){if(run!==A.run)return;return wait(900)})
-  .then(function(){if(run!==A.run)return;return wait(it.fa?2600:300)})
-  .then(function(){if(run!==A.run)return;return wait(1400)})
+  sayEn(it).then(function(){if(run!==A.run)return;return wait(900*spd())})
+  .then(function(){if(run!==A.run)return;return wait((it.fa?2600:300)*spd())})
+  .then(function(){if(run!==A.run)return;return wait(1400*spd())})
   .then(function(){if(run!==A.run)return;A.i++;step(run)});
 }
 function finishAuto(){var A=S.auto;A.run++;stopSound();A.st="done";freeAwake();renderAuto()}
@@ -763,6 +772,7 @@ function renderAuto(){
   if(A.st==="idle"||A.st==="done"){
     h+='<p class="muted">کلماتی که در '+fa(n)+' روز اخیر و امروز مرور کرده‌ای، پشت‌سرهم و بدون دست زدن پخش می‌شوند: انگلیسی خوانده می‌شود و ترجمه‌ی فارسی روی صفحه می‌آید. این فقط گوش دادن است و جعبه‌ها تغییر نمی‌کنند. تعداد روز را در تنظیمات عوض کن.</p>';
     if(A.st==="done")h+='<div class="msg ok">مرور تمام شد.</div>';
+    h+=speedRow();
     h+='<p style="margin-top:12px"><button class="btn go" id="a-start" style="width:100%">'+(A.st==="done"?'پخش دوباره':'شروع مرور')+'</button></p>';
   }else if(A.st==="prep"){
     h+='<p class="muted">در حال آماده‌سازی صدای فارسی'+(A.total?': '+fa(A.prep)+' از '+fa(A.total):'')+'…</p><div class="prog"><i style="width:'+(A.total?Math.round(100*A.prep/A.total):5)+'%"></i></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">لغو</button></p>';
@@ -773,13 +783,14 @@ function renderAuto(){
     h+='<div class="aen" dir="ltr">'+esc(it.en)+'</div>';
     if(it.fa)h+='<div class="afa" dir="rtl">'+esc(it.fa)+'</div>';
     if(it.c.ex)h+='<div class="aex">'+esc(it.c.ex)+'</div>';
-    h+='<div class="ar"><button class="btn" id="a-prev">قبلی</button><button class="btn go" id="a-pp">'+(A.st==="pause"?'ادامه':'توقف موقت')+'</button><button class="btn" id="a-next">بعدی</button></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">پایان</button></p>';
+    h+='<div class="ar"><button class="btn" id="a-prev">قبلی</button><button class="btn go" id="a-pp">'+(A.st==="pause"?'ادامه':'توقف موقت')+'</button><button class="btn" id="a-next">بعدی</button></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">پایان</button></p>'+speedRow();
   }
   h+='</div>';
   if(A.needScript)h+='<div class="panel"><h2>یک بار اسکریپت را به‌روز کن</h2><p class="muted">برای گرفتن صدای فارسی، کد اسکریپت گوگل باید یک بار عوض شود: ۱) در شیت اصلی Extensions › Apps Script را باز کن. ۲) همه‌ی کد قبلی را پاک کن و کد زیر را جایگزین کن. ۳) Deploy › Manage deployments › آیکون مداد › Version: New version › Deploy (اگر اجازه خواست، Authorize را بزن). آدرس عوض نمی‌شود. بعد دوباره «شروع مرور» را بزن.</p><textarea id="a-code" readonly dir="ltr" rows="6" style="width:100%;font:12px/1.4 monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--ink)">'+esc(CODE.replace("__TOKEN__",S.conn.token))+'</textarea><p style="margin-top:8px"><button class="btn sm" id="a-cc">کپی کد</button></p></div>';
   app.innerHTML=h;
   var g=function(i){return document.getElementById(i)};
   if(g("a-cc"))g("a-cc").onclick=function(){var t=g("a-code");t.select();var ok=false;try{if(navigator.clipboard){navigator.clipboard.writeText(t.value);ok=true}}catch(e){}if(!ok)try{ok=document.execCommand("copy")}catch(e){}this.textContent=ok?"کپی شد":"انتخاب شد؛ کپی کن"};
+  [].forEach.call(document.querySelectorAll("[data-lv]"),function(b){b.onclick=function(){S.cfg.speedLv=+b.dataset.lv;saveCfgSoon();renderAuto()}});
   if(g("a-start"))g("a-start").onclick=startAuto;
   if(g("a-stop"))g("a-stop").onclick=stopAuto;
   if(g("a-pp"))g("a-pp").onclick=function(){if(A.st==="pause")resumeAuto();else pauseAuto()};
@@ -826,7 +837,7 @@ document.getElementById("nav-a").onclick=function(){go("auto")};
 document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
-  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
+  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
   if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{}};
   if(l)S.logs[today()]=l;
 }
