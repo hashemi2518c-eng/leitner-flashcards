@@ -31,6 +31,11 @@
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-fa);font-size:15px;line-height:1.7;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
 .wrap{max-width:520px;margin:0 auto}
+.kwr{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;margin:0 0 8px;background:var(--bg);border-radius:10px;border-inline-start:4px solid var(--kc,var(--acc))}
+.kwi{font-size:20px;line-height:1.2;flex:none}
+.kwl{display:block;font-size:13px;font-weight:700;color:var(--kc,var(--acc-ink))}
+.kwl small{font-weight:400;color:var(--ink2);margin-inline-start:6px;font-family:var(--font-en)}
+.kwv{display:block;margin-top:2px;font-size:16px;line-height:1.5;color:var(--ink);text-align:left}
 .bar{background:var(--navy);color:#fff;margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px))) 16px;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--orange)}
 .logo{width:56px;height:56px;flex:none;display:block}
 .ttl{flex:1;min-width:0}
@@ -384,6 +389,17 @@ function faOf(c){return c.speak==="back"?c.front:c.back}
 function hasFa(t){return /[\u0600-\u06FF]/.test(t||"")}
 function enText(c){var a=c.front,b=c.back;if(hasFa(a)&&!hasFa(b))return b;if(hasFa(b)&&!hasFa(a))return a;return enOf(c)}
 function qaSplit(c){var e=enText(c),i=e.indexOf("\u25cf");return i<0?{q:e,a:"",qa:false,all:e}:{q:e.slice(0,i).trim(),a:e.slice(i+1).trim(),qa:true,all:e.replace(/\s*\u25cf\s*/g,". ")}}
+var KWM={opinion:["نظر","💬","n"],reason:["دلیل","💡","g"],example:["مثال","📌","o"],result:["نتیجه","🎯","n"],who:["چه کسی","👤","n"],where:["کجا","📍","g"],when:["کی","🕒","o"],what:["چه کاری","🛠️","n"],feeling:["احساس","❤️","r"],closing:["جمع‌بندی","🏁","g"],detail:["جزئیات","🔍","o"],problem:["مشکل","⚠️","r"],quality:["ویژگی","⭐","o"],lesson:["درس","📖","g"],change:["تغییر","🔄","o"],past:["گذشته","⏪","o"],now:["حال","▶️","g"],future:["آینده","⏩","n"],advice:["توصیه","🧭","n"],broad:["کلی","🔭","n"],narrow:["محدودتر","🎯","g"],narrower:["دقیق‌تر","🔬","o"],"where/who":["کجا / چه کسی","📍","g"]};
+var KWC={n:"var(--bar4)",g:"var(--acc)",o:"var(--orange)",r:"var(--err-ink)"};
+function kwHtml(t){
+  return String(t||"").split("|").map(function(x){return x.trim()}).filter(Boolean).map(function(part){
+    var k,v,m=/^([+\-])\s*(.*)$/.exec(part),i,info;
+    if(m){info=m[1]==="+"?["مثبت","➕","g"]:["منفی","➖","r"];k=m[1]==="+"?"+":"−";v=m[2]}
+    else{i=part.indexOf(":");k=i>0?part.slice(0,i).trim():"";v=i>0?part.slice(i+1).trim():part;info=KWM[k.toLowerCase()]||(k?[k,"🔹","n"]:["","🔹","n"])}
+    var en=(info[0]!==k&&k&&!m)?'<small>'+esc(k)+'</small>':(m?'<small>'+esc(k)+'</small>':'');
+    return '<div class="kwr" style="--kc:'+KWC[info[2]]+'"><span class="kwi">'+info[1]+'</span><span style="flex:1;min-width:0">'+(info[0]?'<span class="kwl">'+esc(info[0])+en+'</span>':'')+'<span class="kwv" dir="ltr">'+esc(v)+'</span></span></div>';
+  }).join("");
+}
 function kwSpeak(t){return String(t||"").replace(/\|/g,". ").replace(/(^|\s)[+\-](?=\s)/g," ").replace(/\s*=\s*/g," means ").replace(/\s+/g," ").trim()}
 function isRev(c){return !!S.cfg.reverse&&!!c}
 function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&!isRev(c))speak(qaSplit(c).q)}
@@ -433,7 +449,7 @@ function renderPractice(){
     h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?faOf(c):enOf(c))+'</div></div>';
     if(qa.qa)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن سؤال (انگلیسی)</span></button></div>';
     else if(!rv)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
-    if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div class="blk" dir="auto">'+esc(c.kw)+'</div><div style="margin-top:8px"><button class="btn sm" id="spkw">'+ICON+'<span>شنیدن کلیدواژه‌ها (انگلیسی)</span></button></div></div>';
+    if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div>'+kwHtml(c.kw)+'</div><div style="margin-top:8px"><button class="btn sm" id="spkw">'+ICON+'<span>شنیدن کلیدواژه‌ها (انگلیسی)</span></button></div></div>';
     if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
     if(S.show){
       if(rv)h+='<div><div class="lab">'+(hasFa(enOf(c))?'Persian · فارسی':'English')+'</div><div class="blk ans en" dir="auto" style="font-size:22px;text-align:center">'+esc(enOf(c))+'</div></div>'+(qa.qa?'':'<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>');
