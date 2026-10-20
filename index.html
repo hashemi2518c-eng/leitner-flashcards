@@ -400,7 +400,7 @@ function kwHtml(t){
     var k,v,m=/^([+\-])\s*(.*)$/.exec(part),i,info;
     if(m){info=m[1]==="+"?["مثبت","➕","g"]:["منفی","➖","r"];k=m[1]==="+"?"+":"−";v=m[2]}
     else{i=part.indexOf(":");k=i>0?part.slice(0,i).trim():"";v=i>0?part.slice(i+1).trim():part;info=KWM[k.toLowerCase()]||(k?[k,"🔹","n"]:["","🔹","n"])}
-    var e2=m?(m[1]==="+"?"Plus":"Minus"):(k.toLowerCase()==="start"?"Starts":k);
+    var e2=m?(m[1]==="+"?"On the plus side":"On the downside"):(k.toLowerCase()==="start"?"Starts":k);
     return '<div class="kwr" dir="ltr" style="--kc:'+KWC[info[2]]+'">'+(e2?'<span class="kwe">'+esc(e2)+':</span> ':'')+'<span class="kwv">'+esc(v)+'</span></div>';
   }).join("");
 }
