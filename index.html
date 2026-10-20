@@ -431,10 +431,10 @@ function renderPractice(){
     h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+(s.early?'<span class="tag cat">مرور جعبه‌ها</span>':s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span></div>';
     h+='<div class="cb'+(ex?' ex':'')+'">';
     h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?faOf(c):enOf(c))+'</div></div>';
-    if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div class="blk" dir="auto">'+esc(c.kw)+'</div><div style="margin-top:8px"><button class="btn sm" id="spkw">'+ICON+'<span>شنیدن کلیدواژه‌ها (انگلیسی)</span></button></div></div>';
-    if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
     if(qa.qa)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن سؤال (انگلیسی)</span></button></div>';
     else if(!rv)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
+    if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div class="blk" dir="auto">'+esc(c.kw)+'</div><div style="margin-top:8px"><button class="btn sm" id="spkw">'+ICON+'<span>شنیدن کلیدواژه‌ها (انگلیسی)</span></button></div></div>';
+    if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
     if(S.show){
       if(rv)h+='<div><div class="lab">'+(hasFa(enOf(c))?'Persian · فارسی':'English')+'</div><div class="blk ans en" dir="auto" style="font-size:22px;text-align:center">'+esc(enOf(c))+'</div></div>'+(qa.qa?'':'<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>');
       else if(ex)h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(faOf(c))+'</div></div>';
