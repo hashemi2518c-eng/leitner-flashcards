@@ -872,6 +872,19 @@ function boot(){
     document.getElementById("rc").onclick=function(){S.conn=null;try{localStorage.removeItem("lt_conn")}catch(x){}renderConnect()}
   });
 }
+function addBack(v){
+  if(v&&S.view!==v)return;
+  var on=S.view==="setup"||S.view==="hist"||S.view==="auto"||(S.view==="practice"&&S.phase==="card");
+  if(!on)return;
+  app.insertAdjacentHTML("afterbegin",'<p style="margin:0 0 10px"><button class="btn sm" id="bk">بازگشت به منوی اصلی ←</button></p>');
+  var b=document.getElementById("bk");
+  if(b)b.onclick=function(){try{speechSynthesis.cancel()}catch(e){}if(S.view==="practice"){S.phase="idle";S.show=false}go("practice")};
+}
+var _rS=renderSetup,_rH=renderHist,_rA=renderAuto,_rP=renderPractice;
+renderSetup=function(){_rS();addBack("setup")};
+renderHist=function(){_rH();addBack("hist")};
+renderAuto=function(){_rA();addBack("auto")};
+renderPractice=function(){_rP();addBack("practice")};
 S.conn=getConn();
 render();
 boot();
