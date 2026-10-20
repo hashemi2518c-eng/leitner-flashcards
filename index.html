@@ -304,7 +304,9 @@ function loadCards(){
   S.cfg.sources.forEach(function(s){(s.tabs||[]).forEach(function(t){if(t.on)list.push({s:s,t:t})})});
   if(!list.length){S.cards=[];S.phase="idle";render();return}
   var sig=cardSig(),ch=lsGet("lt_cards"),hit=ch&&ch.sig===sig&&ch.cards;
+  var rk=JSON.stringify(list.map(function(q){return [q.s.id,q.t.title]})),rw=lsGet("lt_raw");
   if(hit){S.cards=ch.cards;S.loadErr=null;S.phase="idle";restoreSession();render()}
+  else if(rw&&rw.key===rk&&rw.results){hit=true;S.cards=buildCards(rw.results,list);S.loadErr=null;S.phase="idle";restoreSession();render()}
   else{S.phase="loading";render()}
   api("cards",{reqs:list.map(function(q){return {id:q.s.id,tab:q.t.title}})}).then(function(r){
     var bad=r.results.filter(function(x){return x.error});
@@ -317,6 +319,7 @@ function loadCards(){
     });
     if(chg){S.draft=null;saveDoc("config",S.cfg)}
     var cards=buildCards(r.results,list);
+    lsSet("lt_raw",{key:rk,results:r.results});
     lsSet("lt_cards",{sig:cardSig(),cards:cards});
     var changed=!hit||JSON.stringify(cards)!==JSON.stringify(S.cards);
     S.cards=cards;S.loadErr=null;
@@ -643,6 +646,7 @@ function sayEn(it){
 function keepAwake(){try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(function(l){S.auto.wl=l}).catch(function(){})}catch(e){}}
 function freeAwake(){try{if(S.auto.wl){S.auto.wl.release();S.auto.wl=null}}catch(e){}}
 function spd(){return [1.6,1,.65,.4][(S.cfg.speedLv>=1&&S.cfg.speedLv<=4?S.cfg.speedLv:2)-1]}
+function rvBtn(){return '<p style="margin:12px 0 0;text-align:center"><button class="btn sm" id="a-rv" aria-pressed="'+!!S.cfg.reverse+'">حالت برعکس (فارسی ← انگلیسی): '+(S.cfg.reverse?"روشن":"خاموش")+'</button></p>'}
 function speedRow(){var l=S.cfg.speedLv>=1&&S.cfg.speedLv<=4?S.cfg.speedLv:2,h='<div class="lab" style="margin-top:14px">سرعت (۱ آهسته ← ۴ سریع)</div><div class="ar" style="margin-top:6px">';for(var i=1;i<=4;i++)h+='<button class="btn sp" data-lv="'+i+'" aria-pressed="'+(l===i)+'">'+fa(i)+'</button>';return h+'</div>'}
 function step(run){
   var A=S.auto;if(run!==A.run||A.st!=="play")return;
@@ -777,7 +781,7 @@ function renderAuto(){
   if(A.st==="idle"||A.st==="done"){
     h+='<p class="muted">کلماتی که در '+fa(n)+' روز اخیر و امروز مرور کرده‌ای، پشت‌سرهم و بدون دست زدن پخش می‌شوند: انگلیسی خوانده می‌شود و ترجمه‌ی فارسی روی صفحه می‌آید. این فقط گوش دادن است و جعبه‌ها تغییر نمی‌کنند. تعداد روز را در تنظیمات عوض کن.</p>';
     if(A.st==="done")h+='<div class="msg ok">مرور تمام شد.</div>';
-    h+=speedRow();
+    h+=speedRow()+rvBtn();
     h+='<p style="margin-top:12px"><button class="btn go" id="a-start" style="width:100%">'+(A.st==="done"?'پخش دوباره':'شروع مرور')+'</button></p>';
   }else if(A.st==="prep"){
     h+='<p class="muted">در حال آماده‌سازی صدای فارسی'+(A.total?': '+fa(A.prep)+' از '+fa(A.total):'')+'…</p><div class="prog"><i style="width:'+(A.total?Math.round(100*A.prep/A.total):5)+'%"></i></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">لغو</button></p>';
@@ -785,10 +789,10 @@ function renderAuto(){
     var it=A.list[Math.min(A.i,A.list.length-1)];
     h+='<div class="prog"><i style="width:'+Math.round(100*(A.i+1)/A.list.length)+'%"></i></div>';
     h+='<p class="muted" style="text-align:center">'+fa(A.i+1)+' از '+fa(A.list.length)+' · '+esc(it.c.label)+(A.st==="pause"?' · متوقف':'')+'</p>';
-    h+='<div class="aen" dir="ltr">'+esc(it.en)+'</div>';
-    if(it.fa)h+='<div class="afa" dir="rtl">'+esc(it.fa)+'</div>';
+    var he='<div class="aen" dir="ltr">'+esc(it.en)+'</div>',hf=it.fa?'<div class="afa" dir="rtl">'+esc(it.fa)+'</div>':'';
+    h+=S.cfg.reverse?hf+he:he+hf;
     if(it.c.ex)h+='<div class="aex">'+esc(it.c.ex)+'</div>';
-    h+='<div class="ar"><button class="btn" id="a-prev">قبلی</button><button class="btn go" id="a-pp">'+(A.st==="pause"?'ادامه':'توقف موقت')+'</button><button class="btn" id="a-next">بعدی</button></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">پایان</button></p>'+speedRow();
+    h+='<div class="ar"><button class="btn" id="a-prev">قبلی</button><button class="btn go" id="a-pp">'+(A.st==="pause"?'ادامه':'توقف موقت')+'</button><button class="btn" id="a-next">بعدی</button></div><p style="margin-top:12px"><button class="btn sm" id="a-stop">پایان</button></p>'+speedRow()+rvBtn();
   }
   h+='</div>';
   if(A.needScript)h+='<div class="panel"><h2>یک بار اسکریپت را به‌روز کن</h2><p class="muted">برای گرفتن صدای فارسی، کد اسکریپت گوگل باید یک بار عوض شود: ۱) در شیت اصلی Extensions › Apps Script را باز کن. ۲) همه‌ی کد قبلی را پاک کن و کد زیر را جایگزین کن. ۳) Deploy › Manage deployments › آیکون مداد › Version: New version › Deploy (اگر اجازه خواست، Authorize را بزن). آدرس عوض نمی‌شود. بعد دوباره «شروع مرور» را بزن.</p><textarea id="a-code" readonly dir="ltr" rows="6" style="width:100%;font:12px/1.4 monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--ink)">'+esc(CODE.replace("__TOKEN__",S.conn.token))+'</textarea><p style="margin-top:8px"><button class="btn sm" id="a-cc">کپی کد</button></p></div>';
@@ -797,6 +801,7 @@ function renderAuto(){
   if(g("a-cc"))g("a-cc").onclick=function(){var t=g("a-code");t.select();var ok=false;try{if(navigator.clipboard){navigator.clipboard.writeText(t.value);ok=true}}catch(e){}if(!ok)try{ok=document.execCommand("copy")}catch(e){}this.textContent=ok?"کپی شد":"انتخاب شد؛ کپی کن"};
   [].forEach.call(document.querySelectorAll("[data-lv]"),function(b){b.onclick=function(){S.cfg.speedLv=+b.dataset.lv;saveCfgSoon();renderAuto()}});
   if(g("a-start"))g("a-start").onclick=startAuto;
+  if(g("a-rv"))g("a-rv").onclick=function(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderAuto()};
   if(g("a-stop"))g("a-stop").onclick=stopAuto;
   if(g("a-pp"))g("a-pp").onclick=function(){if(A.st==="pause")resumeAuto();else pauseAuto()};
   if(g("a-prev"))g("a-prev").onclick=function(){jumpAuto(-1)};
