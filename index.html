@@ -282,11 +282,11 @@ function pickCols(h){
   function find(re,def){for(var i=0;i<h.length;i++)if(re.test(h[i]||""))return i;return def}
   var f=find(/^(english|word|phrase|question|سوال|سؤال)/i,0),b=find(/persian|farsi|answer|جواب|فارسی/i,f===0?1:0);
   if(b===f)b=f===0?1:0;
-  return {front:f,back:b,struct:find(/structure|ساختار|template|outline/i,-1),cat:find(/^(category|type|chapter|سرفصل|دسته)/i,-1),ex:find(/^(en(glish)?\s*example|example)/i,-1),exfa:find(/^(fa(rsi)?\s*example|persian\s*example)|ترجمه‌ی مثال/i,-1)};
+  return {front:f,back:b,struct:find(/structure|ساختار|template|outline/i,-1),kw:find(/keyword|کلیدواژه/i,-1),cat:find(/^(category|type|chapter|سرفصل|دسته)/i,-1),ex:find(/^(en(glish)?\s*example|example)/i,-1),exfa:find(/^(fa(rsi)?\s*example|persian\s*example)|ترجمه‌ی مثال/i,-1)};
 }
 function colName(i,h){return String.fromCharCode(65+i)+(h[i]?" · "+h[i]:"")}
 
-function cardSig(){var a=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(t){if(t.on)a.push([sr.sid,sr.id,t.tid,t.title,t.label,t.front,t.back,t.struct,t.cat,t.ex,t.exfa,t.speak])})});return JSON.stringify(a)}
+function cardSig(){var a=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(t){if(t.on)a.push([sr.sid,sr.id,t.tid,t.title,t.label,t.front,t.back,t.struct,t.kw,t.cat,t.ex,t.exfa,t.speak])})});return JSON.stringify(a)}
 function buildCards(res,list){
   var out=[];
   list.forEach(function(q,k){
@@ -294,7 +294,7 @@ function buildCards(res,list){
     for(var r=1;r<rows.length;r++){
       var g=function(c){return c==null||c<0?"":String(rows[r][c]==null?"":rows[r][c]).trim()};
       var a=g(t.front),b=g(t.back);
-      if(a&&b)out.push({id:s.sid+"_"+t.tid+"_"+(r+1),sid:s.sid,tid:t.tid,label:t.label||t.title,front:a,back:b,struct:g(t.struct),cat:g(t.cat),ex:g(t.ex),exfa:g(t.exfa),speak:t.speak||"front"});
+      if(a&&b)out.push({id:s.sid+"_"+t.tid+"_"+(r+1),sid:s.sid,tid:t.tid,label:t.label||t.title,front:a,back:b,struct:g(t.struct),kw:g(t.kw),cat:g(t.cat),ex:g(t.ex),exfa:g(t.exfa),speak:t.speak||"front"});
     }
   });
   return out;
@@ -313,7 +313,7 @@ function loadCards(){
     r.results.forEach(function(x,k){
       var t=list[k].t,h=((x&&x.values&&x.values[0])||[]).map(function(v){return String(v)});
       if(!h.length)return;
-      if(JSON.stringify(h)!==JSON.stringify(t.headers||[])){t.headers=h;chg=true;var c=pickCols(h);if(!(t.ex>=0)&&c.ex>=0)t.ex=c.ex;if(!(t.exfa>=0)&&c.exfa>=0)t.exfa=c.exfa}
+      if(JSON.stringify(h)!==JSON.stringify(t.headers||[])){t.headers=h;chg=true;var c=pickCols(h);if(!(t.ex>=0)&&c.ex>=0)t.ex=c.ex;if(!(t.exfa>=0)&&c.exfa>=0)t.exfa=c.exfa;if(!(t.kw>=0)&&c.kw>=0)t.kw=c.kw}
     });
     if(chg){S.draft=null;saveDoc("config",S.cfg)}
     var cards=buildCards(r.results,list);
@@ -376,10 +376,12 @@ function startRepeat(){
   saveDoc("progress",S.prog);S.phase="card";render();autoFront();
 }
 function cur(){var s=S.prog.session;return s&&s.ids&&S.idx<s.ids.length?byId(s.ids[S.idx]):null}
-function isRev(c){return !!S.cfg.reverse&&!!c&&!c.struct&&c.speak!=="back"}
-function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="front"&&!isRev(c))speak(c.front)}
-function toggleRev(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderPractice();var c=cur();if(S.phase==="card"&&c&&!S.show)autoFront();if(S.phase==="card"&&c&&S.show&&isRev(c)&&S.cfg.autoSpeak)speak(c.front)}
-function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&c.speak==="back")speak(c.back);else if(c&&S.cfg.autoSpeak&&isRev(c))speak(c.front)}
+function enOf(c){return c.speak==="back"?c.back:c.front}
+function faOf(c){return c.speak==="back"?c.front:c.back}
+function isRev(c){return !!S.cfg.reverse&&!!c}
+function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&!isRev(c))speak(enOf(c))}
+function toggleRev(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderPractice();var c=cur();if(S.phase==="card"&&c&&!S.show)autoFront();if(S.phase==="card"&&c&&S.show&&isRev(c)&&S.cfg.autoSpeak)speak(enOf(c))}
+function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&isRev(c))speak(enOf(c))}
 function answer(known){
   var s=S.prog.session,id=s.ids[S.idx],x=S.prog.p[id],box,c=byId(id);
   var td=today(),base=x?(x[2]===td?x[3]:x[0]):0;
@@ -417,17 +419,18 @@ function renderPractice(){
   if(S.loadErr)h+='<div class="msg">'+esc(S.loadErr)+'</div>';
   var s=S.prog.session,t=today(),c=cur();
   if(S.phase==="card"&&c){
-    var x=S.prog.p[c.id],ex=!!c.struct,rv=isRev(c),txt=c.speak==="back"?c.back:c.front;
+    var x=S.prog.p[c.id],ex=!!c.struct,rv=isRev(c),txt=enOf(c);
     h+='<div class="prog"><i style="width:'+Math.round(100*S.idx/s.ids.length)+'%"></i></div>';
     h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+(s.early?'<span class="tag cat">مرور جعبه‌ها</span>':s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span></div>';
     h+='<div class="cb'+(ex?' ex':'')+'">';
-    h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?c.back:c.front)+'</div></div>';
+    h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?faOf(c):enOf(c))+'</div></div>';
+    if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div class="blk" dir="auto">'+esc(c.kw)+'</div></div>';
     if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
     if(!rv)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
     if(S.show){
-      if(rv)h+='<div><div class="lab">English</div><div class="blk ans en" dir="ltr" style="font-size:22px;text-align:center">'+esc(c.front)+'</div></div><div>'+'<button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
-      else if(ex||c.speak==="back")h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(c.back)+'</div></div>';
-      else h+='<div class="back" dir="auto">'+esc(c.back)+'</div>';
+      if(rv)h+='<div><div class="lab">English</div><div class="blk ans en" dir="ltr" style="font-size:22px;text-align:center">'+esc(enOf(c))+'</div></div><div>'+'<button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
+      else if(ex)h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(faOf(c))+'</div></div>';
+      else h+='<div class="back" dir="auto">'+esc(faOf(c))+'</div>';
       if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start"><div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'')+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال</span></button></div></div>';
     }
     h+='</div></div>';
@@ -435,7 +438,7 @@ function renderPractice(){
     if(!S.show)h+='<button class="btn go" id="rev" style="width:100%">نمایش پاسخ</button>';
     else h+='<div class="grid2"><button class="btn hard" id="no">سخت بود</button><button class="btn known" id="yes">بلد بودم</button></div>';
     app.innerHTML=h;
-    var sk=document.getElementById("spk");if(sk)sk.onclick=function(){speak(rv?c.front:txt,true)};
+    var sk=document.getElementById("spk");if(sk)sk.onclick=function(){speak(enOf(c),true)};
     var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
     var rt=document.getElementById("rvt");if(rt)rt.onclick=toggleRev;
     var r=document.getElementById("rev");if(r)r.onclick=reveal;
@@ -501,6 +504,7 @@ function renderSetup(){
         h+='<div><label class="f" for="lb'+id+'">سرفصل این تب (مثلاً تخصصی برق)</label><input type="text" id="lb'+id+'" data-lb="'+id+'" value="'+esc(t.label||t.title)+'"></div>';
         h+='<div class="grid2"><div><label class="f">روی کارت (سؤال یا کلمه)</label><select data-fc="'+id+'">'+o(t.front)+'</select></div><div><label class="f">پشت کارت (جواب)</label><select data-bc="'+id+'">'+o(t.back)+'</select></div></div>';
         h+='<div class="grid2"><div><label class="f">ستون ساختار (برای تمرین CELPIP)</label><select data-sc="'+id+'">'+o(t.struct==null?-1:t.struct,true)+'</select></div><div><label class="f">ستون سرفصل هر ردیف</label><select data-cc="'+id+'">'+o(t.cat==null?-1:t.cat,true)+'</select></div></div>';
+        h+='<div><label class="f">ستون کلیدواژه‌ها (Keywords، بالای ساختار نمایش داده می‌شود)</label><select data-kc="'+id+'">'+o(t.kw==null?-1:t.kw,true)+'</select></div>';
         h+='<div class="grid2"><div><label class="f">ستون جمله‌ی مثال (انگلیسی)</label><select data-ex="'+id+'">'+o(t.ex==null?-1:t.ex,true)+'</select></div><div><label class="f">ستون ترجمه‌ی مثال (فارسی)</label><select data-xf="'+id+'">'+o(t.exfa==null?-1:t.exfa,true)+'</select></div></div>';
         h+='<div><label class="f">کدام طرف انگلیسی است و خوانده شود</label><select data-sp="'+id+'"><option value="front"'+((t.speak||"front")==="front"?" selected":"")+'>روی کارت</option><option value="back"'+(t.speak==="back"?" selected":"")+'>پشت کارت (جواب)</option></select></div>';
       }
@@ -535,6 +539,7 @@ function renderSetup(){
   q("data-fc").forEach(function(el){el.onchange=function(){pi(el.dataset.fc).front=+el.value}});
   q("data-bc").forEach(function(el){el.onchange=function(){pi(el.dataset.bc).back=+el.value}});
   q("data-sc").forEach(function(el){el.onchange=function(){var t=pi(el.dataset.sc);t.struct=+el.value;if(t.struct>=0)t.speak="back"}});
+  q("data-kc").forEach(function(el){el.onchange=function(){pi(el.dataset.kc).kw=+el.value}});
   q("data-cc").forEach(function(el){el.onchange=function(){pi(el.dataset.cc).cat=+el.value}});
   q("data-ex").forEach(function(el){el.onchange=function(){pi(el.dataset.ex).ex=+el.value}});
   q("data-xf").forEach(function(el){el.onchange=function(){pi(el.dataset.xf).exfa=+el.value}});
@@ -813,7 +818,7 @@ function loadHeaders(i,j){
   var s=S.draft.sources[i],t=s.tabs[j];
   call("get_values",{spreadsheetId:s.id,range:rng(t.title,"A1:Z1")}).then(function(p){
     var h=((p&&p.values&&p.values[0])||[]).map(function(x){return String(x)});
-    var c=pickCols(h);t.headers=h;t.front=c.front;t.back=c.back;t.struct=c.struct;t.cat=c.cat;t.ex=c.ex;t.exfa=c.exfa;t.speak=c.struct>=0?"back":"front";if(!t.label)t.label=t.title;
+    var c=pickCols(h);t.headers=h;t.front=c.front;t.back=c.back;t.struct=c.struct;t.kw=c.kw;t.cat=c.cat;t.ex=c.ex;t.exfa=c.exfa;t.speak=c.struct>=0?"back":"front";if(!t.label)t.label=t.title;
     renderSetup();
   }).catch(function(e){t.on=false;note(errText(e));renderSetup()});
 }
