@@ -400,6 +400,19 @@ function kwHtml(t){
     return '<div class="kwr" style="--kc:'+KWC[info[2]]+'"><span class="kwi">'+info[1]+'</span><span style="flex:1;min-width:0">'+(info[0]?'<span class="kwl">'+esc(info[0])+en+'</span>':'')+'<span class="kwv" dir="ltr">'+esc(v)+'</span></span></div>';
   }).join("");
 }
+var CLTAB="تمرین لایتنر";
+function sendToChat(c,btn){
+  var src=null;S.cfg.sources.forEach(function(x){if(x.sid===c.sid)src=x});
+  if(!src){note("منبع این کارت پیدا نشد.");return}
+  var qa=qaSplit(c),x=S.prog.p[c.id],ts=new Date(),pad2=function(n){return (n<10?"0":"")+n};
+  var stamp=ts.getFullYear()+"-"+pad2(ts.getMonth()+1)+"-"+pad2(ts.getDate())+" "+pad2(ts.getHours())+":"+pad2(ts.getMinutes())+":"+pad2(ts.getSeconds());
+  var rows=[["Leitner practice | تمرین لایتنر","کارت فعلی برای تمرین با Claude"],["sent at | زمان ارسال",stamp],["status | وضعیت","new | جدید"],["tab | تب",c.label],["category | سرفصل",c.cat],["card id | شناسه",c.id],["front column | ستون روی کارت",c.front],["back column | ستون پشت کارت",c.back],["English question | سؤال انگلیسی",qa.qa?qa.q:enText(c)],["English answer | جواب انگلیسی",qa.qa?qa.a:enText(c)],["keywords | کلیدواژه‌ها",c.kw],["structure | ساختار",c.struct],["example EN | مثال انگلیسی",c.ex],["example FA | ترجمه مثال",c.exfa],["box | جعبه",x?String(x[0]):"new"]];
+  if(btn){btn.disabled=true;btn.textContent="در حال فرستادن…"}
+  api("update",{id:src.id,tab:CLTAB,values:rows}).then(function(){
+    note("کارت فرستاده شد. در چت «تمرین لایتنر» بنویس: شروع",true);
+    if(btn){btn.disabled=false;btn.textContent="فرستاده شد ✓ · تمرین با Claude"}
+  }).catch(function(e){note(errText(e));if(btn){btn.disabled=false;btn.textContent="تمرین این کارت با Claude"}});
+}
 function kwSpeak(t){return String(t||"").replace(/\|/g,". ").replace(/(^|\s)[+\-](?=\s)/g," ").replace(/\s*=\s*/g," means ").replace(/\s+/g," ").trim()}
 function isRev(c){return !!S.cfg.reverse&&!!c}
 function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&!isRev(c))speak(qaSplit(c).q)}
@@ -460,6 +473,7 @@ function renderPractice(){
     }
     h+='</div></div>';
     h+='<p style="margin:12px 0 0;text-align:center"><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">حالت برعکس (فارسی ← انگلیسی): '+(S.cfg.reverse?"روشن":"خاموش")+'</button></p>';
+    h+='<p style="margin:8px 0 0;text-align:center"><button class="btn sm" id="cl">تمرین این کارت با Claude</button></p>';
     if(!S.show)h+='<button class="btn go" id="rev" style="width:100%">نمایش پاسخ</button>';
     else h+='<div class="grid2"><button class="btn hard" id="no">سخت بود</button><button class="btn known" id="yes">بلد بودم</button></div>';
     app.innerHTML=h;
@@ -468,6 +482,7 @@ function renderPractice(){
     var sa=document.getElementById("spa");if(sa)sa.onclick=function(){speak(qa.a,true)};
     var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
     var rt=document.getElementById("rvt");if(rt)rt.onclick=toggleRev;
+    var cl=document.getElementById("cl");if(cl)cl.onclick=function(){sendToChat(c,cl)};
     var r=document.getElementById("rev");if(r)r.onclick=reveal;
     var y=document.getElementById("yes");if(y){y.onclick=function(){answer(true)};document.getElementById("no").onclick=function(){answer(false)}}
     return;
