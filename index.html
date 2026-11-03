@@ -61,7 +61,8 @@ button,select,input{font:inherit;color:inherit}
 .btn.sm{min-height:44px;padding:0 14px;font-size:13px}
 .tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.exi{white-space:normal;margin:0 0 8px}.exl{display:inline-block;font-family:var(--font-en);font-size:12px;font-weight:700;padding:0 7px;margin-inline-end:6px;border-radius:10px;background:var(--acc-soft);color:var(--acc-ink);line-height:20px;vertical-align:baseline}
 .sg{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:4px;overflow:hidden}.sgi{display:block;width:100%;min-height:40px;padding:0 12px;text-align:start;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;font-family:var(--font-en);font-size:15px}.sgi:last-child{border-bottom:0}.sgi:hover{background:var(--acc-soft)}mark{background:var(--acc-soft);color:var(--acc-ink);border-radius:3px;padding:0 1px}
-.adv{margin-top:12px}.adv summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:500}.facets{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.card.paused .cb{opacity:.3;filter:blur(4px);pointer-events:none}.brow{width:100%;text-align:start}
+.achip{display:inline-flex;align-items:center;gap:4px;font-size:11px;line-height:1.6;padding:2px 8px;margin-inline-start:6px;border-radius:12px;border:1px solid var(--acc);background:var(--acc-soft);color:var(--acc-ink);cursor:pointer;font-family:var(--font-en)}.achip b{font-size:15px;line-height:1}
+.adv{margin-top:12px}.adv summary{cursor:pointer;min-height:44px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:13px;font-weight:500}.facets{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.card.paused .cb{opacity:.3;filter:blur(4px);pointer-events:none}.brow{width:100%;text-align:start}
 .tm{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-en);font-size:13px;color:var(--ink2);padding:0 6px;direction:ltr;font-variant-numeric:tabular-nums}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
 @media (hover:none){.kb{display:none}}
 @media (min-width:768px){.wrap{max-width:680px}}
@@ -620,11 +621,12 @@ function renderBank(){
   var h='<div class="panel"><h2>بانک لغات</h2><p class="muted" id="bc"></p>';
   h+='<div><label class="f">جستجو</label><input type="text" id="bq" value="'+esc(S.bq||"")+'" placeholder="کلمه، معنی یا مثال" dir="auto" autocomplete="off"><div id="bsg" class="sg" style="display:none"></div></div>';
   h+='<div style="margin-top:10px"><label class="f">مرتب‌سازی</label><select id="bs">'+Object.keys(BS).map(function(k){return '<option value="'+k+'"'+((S.bs||"sheet")===k?" selected":"")+'>'+BS[k]+'</option>'}).join("")+'</select></div>';
-  if(F.length)h+='<details class="adv"'+(Object.keys(ff).some(function(k){return ff[k]})?" open":"")+'><summary>فیلتر (فصل، سکشن، نوع و…)</summary><div class="facets">'+facetHtml(F,ff,"bf")+'</div></details>';
+  if(F.length)h+='<details class="adv"'+(Object.keys(ff).some(function(k){return ff[k]})?" open":"")+'><summary>فیلتر (فصل، سکشن، نوع و…)'+chipsHtml(ff,"bfx")+'</summary><div class="facets">'+facetHtml(F,ff,"bf")+'</div></details>';
   h+='<div id="bl" style="margin-top:12px"></div></div>';
   app.innerHTML=h;
   document.getElementById("bq").oninput=function(){S.bq=this.value;S.bn=100;bankUpdate()};
   document.getElementById("bs").onchange=function(){S.bs=this.value;S.bn=100;bankUpdate()};
+  [].forEach.call(app.querySelectorAll("[data-bfx]"),function(el){el.onclick=function(e){e.preventDefault();e.stopPropagation();delete ff[el.dataset.bfx];S.bn=100;renderBank()}});
   [].forEach.call(app.querySelectorAll("[data-bf]"),function(el){el.onchange=function(){var f=F[+el.dataset.bf];if(el.value)ff[f.k]=el.value;else delete ff[f.k];S.bn=100;bankUpdate()}});
   bankUpdate();
   if(S.bankY){var y=S.bankY;S.bankY=0;setTimeout(function(){window.scrollTo(0,y)},0)}
@@ -670,6 +672,7 @@ function totalChart(){
   });
   return h+'</div>';
 }
+function chipsHtml(ff,pre){return Object.keys(ff||{}).filter(function(k){return ff[k]}).map(function(k){return '<button type="button" class="achip" dir="ltr" title="حذف فیلتر" data-'+pre+'="'+esc(k)+'">'+esc(k)+': '+esc(ff[k])+' <b>×</b></button>'}).join("")}
 function secHead(ic,t,sub){return '<div class="sh"><span class="shi">'+ic+'</span><div><h2>'+esc(t)+'</h2>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div></div>'}
 function kpi(ic,v,l){return '<div class="kpi"><em>'+ic+'</em><b>'+v+'</b><span>'+l+'</span></div>'}
 function streak(){var D=S.prog.days||{},d=today(),n=0;if(!(D[d]&&D[d].n>0))d=addDays(d,-1);while(D[d]&&D[d].n>0){n++;d=addDays(d,-1)}return n}
@@ -742,7 +745,7 @@ function renderPractice(){
     h+='<div class="sub" style="margin-top:0">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه ('+fa(S.cards.length)+')</button>'+tabs.map(function(tb){var cn=S.cards.filter(function(c){return c.tid===tb.tid}).length;return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+' ('+fa(cn)+')</button>'}).join("")+'</div>';
   }
   var ffs=S.prog.ff||{},FF=facets(tabCards());
-  if(FF.length)h+='<details class="adv"'+(Object.keys(ffs).some(function(k){return ffs[k]})?' open':'')+'><summary>🔎 فیلتر پیشرفته (فصل، سکشن، نوع و…)</summary><div class="facets">'+facetHtml(FF,ffs,"pf")+'</div></details>';
+  if(FF.length)h+='<details class="adv"'+(Object.keys(ffs).some(function(k){return ffs[k]})?' open':'')+'><summary>🔎 فیلتر پیشرفته (فصل، سکشن، نوع و…)'+chipsHtml(ffs,"pfx")+'</summary><div class="facets">'+facetHtml(FF,ffs,"pf")+'</div></details>';
   h+='<div class="mode"><span>حالت برعکس (فارسی ← انگلیسی)</span><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">'+(S.cfg.reverse?"روشن":"خاموش")+'</button></div>';
   h+='<p class="muted" style="margin-top:10px">'+fa(active().length)+' کلمه برای تمرین فعال است.</p></div>';
   /* 4 boxes */
@@ -763,6 +766,7 @@ function renderPractice(){
   var eb=document.getElementById("early");if(eb)eb.onclick=startEarly;
   var nb=document.getElementById("nextb");if(nb)nb.onclick=function(){startSession(true)};
   var rb=document.getElementById("rebuild");if(rb)rb.onclick=function(){resetSession();renderPractice()};
+  [].forEach.call(app.querySelectorAll("[data-pfx]"),function(el){el.onclick=function(e){e.preventDefault();e.stopPropagation();var ff=S.prog.ff||{};delete ff[el.dataset.pfx];S.prog.ff=ff;resetSession();renderPractice()}});
   [].forEach.call(app.querySelectorAll("[data-pf]"),function(el){el.onchange=function(){
     var ff=S.prog.ff||(S.prog.ff={}),f=FF[+el.dataset.pf];
     if(el.value)ff[f.k]=el.value;else delete ff[f.k];
