@@ -59,7 +59,8 @@ button,select,input{font:inherit;color:inherit}
 .btn.hard{background:var(--hard-soft);border-color:var(--hard-line);color:var(--hard-ink)}
 .btn.known{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-ink)}
 .btn.sm{min-height:44px;padding:0 14px;font-size:13px}
-.tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.adv{margin-top:12px}.adv summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:500}.facets{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.card.paused .cb{opacity:.3;filter:blur(4px);pointer-events:none}.brow{width:100%;text-align:start}
+.tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.exi{white-space:normal;margin:0 0 8px}.exl{display:inline-block;font-family:var(--font-en);font-size:12px;font-weight:700;padding:0 7px;margin-inline-end:6px;border-radius:10px;background:var(--acc-soft);color:var(--acc-ink);line-height:20px;vertical-align:baseline}
+.adv{margin-top:12px}.adv summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:500}.facets{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.card.paused .cb{opacity:.3;filter:blur(4px);pointer-events:none}.brow{width:100%;text-align:start}
 .tm{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-en);font-size:13px;color:var(--ink2);padding:0 6px;direction:ltr;font-variant-numeric:tabular-nums}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
 @media (hover:none){.kb{display:none}}
 @media (min-width:768px){.wrap{max-width:680px}}
@@ -301,17 +302,18 @@ function pickCols(h){
 }
 function colName(i,h){return String.fromCharCode(65+i)+(h[i]?" · "+h[i]:"")}
 
-function cardSig(){var a=["v2"];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(t){if(t.on)a.push([sr.sid,sr.id,t.tid,t.title,t.label,t.front,t.back,t.struct,t.kw,t.cat,t.ex,t.exfa,t.speak])})});return JSON.stringify(a)}
+function cardSig(){var a=["v3"];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(t){if(t.on)a.push([sr.sid,sr.id,t.tid,t.title,t.label,t.front,t.back,t.struct,t.kw,t.cat,t.ex,t.exfa,t.speak])})});return JSON.stringify(a)}
 var FRE=/chapter|section|part|technique|type|level|category|cec|page|use|فصل|سرفصل|دسته|سکشن|صفحه|نوع/i,FEX=/example|ترجمه|مرجع|وضعیت|keyword|کلید|structure|ساختار|date|next|result|persian|meaning|pronunc|source|مثال/i;
 function buildCards(res,list){
   var out=[];
   list.forEach(function(q,k){
-    var rows=(res[k]&&res[k].values)||[],s=q.s,t=q.t,hd=rows[0]||[],fcols=[];
+    var rows=(res[k]&&res[k].values)||[],s=q.s,t=q.t,hd=rows[0]||[],fcols=[],refc=-1;
+    hd.forEach(function(hh,ci){if(refc<0&&/^\s*(مرجع|reference)/i.test(String(hh||"")))refc=ci});
     hd.forEach(function(hh,ci){hh=String(hh||"").trim();if(hh&&hh.length<=40&&FRE.test(hh)&&!FEX.test(hh)&&[t.front,t.back,t.struct,t.kw,t.ex,t.exfa].indexOf(ci)<0)fcols.push([ci,hh])});
     for(var r=1;r<rows.length;r++){
       var g=function(c){return c==null||c<0?"":String(rows[r][c]==null?"":rows[r][c]).trim()};
       var a=g(t.front),b=g(t.back);
-      if(a&&b)out.push({id:s.sid+"_"+t.tid+"_"+(r+1),sid:s.sid,tid:t.tid,label:t.label||t.title,front:a,back:b,struct:g(t.struct),kw:g(t.kw),cat:g(t.cat),ex:g(t.ex),exfa:g(t.exfa),speak:t.speak||"front",f:(function(){var o={};fcols.forEach(function(fc){var v=g(fc[0]);if(v)o[fc[1]]=v});return o})()});
+      if(a&&b)out.push({id:s.sid+"_"+t.tid+"_"+(r+1),sid:s.sid,tid:t.tid,label:t.label||t.title,front:a,back:b,struct:g(t.struct),kw:g(t.kw),cat:g(t.cat),ex:g(t.ex),exfa:g(t.exfa),ref:g(refc),speak:t.speak||"front",f:(function(){var o={};fcols.forEach(function(fc){var v=g(fc[0]);if(v)o[fc[1]]=v});return o})()});
     }
   });
   return out;
@@ -498,6 +500,16 @@ function render(){
   if(S.view==="bank")return renderBank();
   renderPractice();
 }
+function exItems(t){return String(t||"").split(/\n(?=\d+\)\s)/).map(function(x){var m=/^(\d+)\)\s*([\s\S]*)$/.exec(x.trim());return m?{n:m[1],t:m[2].trim()}:{n:"",t:x.trim()}})}
+function exLabels(ref){var o={};String(ref||"").split(/\n(?=\d+\)\s)/).forEach(function(x){var m=/^(\d+)\)/.exec(x.trim());if(!m)return;var sx=/سکشن\s*(\d+)/.exec(x),px=/صفحه\s*(\d+)/.exec(x);if(sx||px)o[m[1]]=(sx?"S"+sx[1]:"")+(sx&&px?" - ":"")+(px?"P"+px[1]:"")});return o}
+function exHtml(c){
+  var L=exLabels(c.ref);
+  if(!Object.keys(L).length)return '<div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'');
+  function row(it,rtl){if(!it.t)return "";var lb=L[it.n];return '<div class="exi" dir="'+(rtl?'rtl':'ltr')+'">'+(lb?'<bdi dir="ltr" class="exl">'+esc(lb)+'</bdi> '+esc(it.t):esc((it.n?it.n+") ":"")+it.t))+'</div>'}
+  var h='<div class="ltr" style="font-size:15px">'+exItems(c.ex).map(function(it){return row(it,false)}).join("")+'</div>';
+  if(c.exfa)h+='<div style="margin-top:8px;color:var(--ink2)">'+exItems(c.exfa).map(function(it){return row(it,true)}).join("")+'</div>';
+  return h;
+}
 function cardPanel(c,show,tags,mode){
   var h='',ex=!!c.struct,rv=isRev(c),qa=qaSplit(c);
   h+='<div class="panel card'+(mode==="p"&&S.paused?' paused':'')+'"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+tags+'</div>';
@@ -512,7 +524,7 @@ function cardPanel(c,show,tags,mode){
     else if(ex)h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(faOf(c))+'</div></div>';
     else h+='<div class="back" dir="auto">'+esc(faOf(c))+'</div>';
     if(qa.qa&&qa.a)h+='<div><button class="btn sm" id="spa">'+ICON+'<span>شنیدن جواب (انگلیسی)</span></button></div>';
-    if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start"><div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'')+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال (انگلیسی)</span></button></div></div>';
+    if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start">'+exHtml(c)+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال (انگلیسی)</span></button></div></div>';
   }
   h+='</div></div>';
   return h;
