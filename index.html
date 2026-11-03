@@ -60,6 +60,7 @@ button,select,input{font:inherit;color:inherit}
 .btn.known{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-ink)}
 .btn.sm{min-height:44px;padding:0 14px;font-size:13px}
 .tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.exi{white-space:normal;margin:0 0 8px}.exl{display:inline-block;font-family:var(--font-en);font-size:12px;font-weight:700;padding:0 7px;margin-inline-end:6px;border-radius:10px;background:var(--acc-soft);color:var(--acc-ink);line-height:20px;vertical-align:baseline}
+.sg{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:4px;overflow:hidden}.sgi{display:block;width:100%;min-height:40px;padding:0 12px;text-align:start;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;font-family:var(--font-en);font-size:15px}.sgi:last-child{border-bottom:0}.sgi:hover{background:var(--acc-soft)}mark{background:var(--acc-soft);color:var(--acc-ink);border-radius:3px;padding:0 1px}
 .adv{margin-top:12px}.adv summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:500}.facets{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.card.paused .cb{opacity:.3;filter:blur(4px);pointer-events:none}.brow{width:100%;text-align:start}
 .tm{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-en);font-size:13px;color:var(--ink2);padding:0 6px;direction:ltr;font-variant-numeric:tabular-nums}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
 @media (hover:none){.kb{display:none}}
@@ -535,43 +536,82 @@ function bindCard(c){var qa=qaSplit(c);
   var sa=document.getElementById("spa");if(sa)sa.onclick=function(){speak(qa.a,true)};
   var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
 }
-var BS={sheet:"ترتیب شیت",az:"الفبا (A تا Z)",box:"جعبه (کم به زیاد)",due:"سررسید (زودتر اول)"};
+var BS={sheet:"ترتیب شیت (هنگام جستجو: مرتبط‌ترین)",az:"الفبا (A تا Z)",box:"جعبه (کم به زیاد)",due:"سررسید (زودتر اول)"};
+function headOf(c){return qaSplit(c).q.toLowerCase()}
+function wordStart(t,q){var i=-1;while((i=t.indexOf(q,i+1))>=0){if(i===0||/[\s\-\/(,.:;]/.test(t.charAt(i-1)))return true}return false}
+function scoreCard(c,q){
+  var h=headOf(c),f=faOf(c).toLowerCase(),sc=0;
+  if(h===q)sc=100;else if(h.indexOf(q)===0)sc=90;else if(wordStart(h,q))sc=75;else if(h.indexOf(q)>=0)sc=60;
+  else if(f===q)sc=95;else if(f.indexOf(q)===0)sc=70;else if(wordStart(f,q))sc=55;else if(f.indexOf(q)>=0)sc=45;
+  else if((c.kw||"").toLowerCase().indexOf(q)>=0)sc=25;
+  else if((c.ex||"").toLowerCase().indexOf(q)>=0)sc=20;
+  else if((c.exfa||"").toLowerCase().indexOf(q)>=0)sc=15;
+  else if((c.ref||"").toLowerCase().indexOf(q)>=0)sc=10;
+  return sc;
+}
 function bankList(){
-  var q=(S.bq||"").trim().toLowerCase(),ff=S.bf||{},P=S.prog.p;
-  var L=S.cards.filter(function(c){
-    if(!matchF(c,ff))return false;
-    if(!q)return true;
-    return (c.front+" "+c.back+" "+c.ex+" "+c.exfa+" "+c.kw).toLowerCase().indexOf(q)>=0;
-  });
-  var m=S.bs||"sheet";
-  if(m==="az")L.sort(function(a,b){var x=enText(a).toLowerCase(),y=enText(b).toLowerCase();return x<y?-1:x>y?1:0});
+  var q=(S.bq||"").trim().toLowerCase(),ff=S.bf||{},P=S.prog.p,m=S.bs||"sheet";
+  var L=S.cards.filter(function(c){return matchF(c,ff)});
+  if(q){
+    var sc={};
+    L=L.filter(function(c){var v=scoreCard(c,q);sc[c.id]=v;return v>0});
+    if(m==="sheet")L.sort(function(a,b){var d=sc[b.id]-sc[a.id];if(d)return d;var x=headOf(a),y=headOf(b);return x.length-y.length||(x<y?-1:x>y?1:0)});
+  }
+  if(m==="az")L.sort(function(a,b){var x=headOf(a),y=headOf(b);return x<y?-1:x>y?1:0});
   else if(m==="box")L.sort(function(a,b){return (P[a.id]?P[a.id][0]:0)-(P[b.id]?P[b.id][0]:0)});
   else if(m==="due")L.sort(function(a,b){var x=P[a.id]?P[a.id][1]:"9999",y=P[b.id]?P[b.id][1]:"9999";return x<y?-1:x>y?1:0});
   return L;
 }
+function hl(t,q){
+  if(!q)return esc(t);
+  var i=t.toLowerCase().indexOf(q);
+  if(i<0)return esc(t);
+  return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length));
+}
 function bankRows(){
-  var L=bankList(),n=S.bn||100,P=S.prog.p;
+  var L=bankList(),n=S.bn||100,P=S.prog.p,q=(S.bq||"").trim().toLowerCase();
   var h=L.slice(0,n).map(function(c){
     var x=P[c.id],en=qaSplit(c).q,fz=faOf(c);
     if(en.length>90)en=en.slice(0,90)+"…";if(fz.length>80)fz=fz.slice(0,80)+"…";
-    return '<button class="hrow brow" data-b="'+esc(c.id)+'"><span><b dir="ltr">'+esc(en)+'</b><br><small dir="auto">'+esc(fz)+'</small></span><span class="tag">'+(x?'جعبه '+fa(x[0]):'جدید')+'</span></button>';
+    return '<button class="hrow brow" data-b="'+esc(c.id)+'"><span><b dir="ltr">'+hl(en,q)+'</b><br><small dir="auto">'+hl(fz,q)+'</small></span><span class="tag">'+(x?'جعبه '+fa(x[0]):'جدید')+'</span></button>';
   }).join("");
   if(L.length>n)h+='<p><button class="btn sm" id="bmore">نمایش بیشتر (۱۰۰ مورد دیگر)</button></p>';
   if(!L.length)h='<p class="muted">موردی پیدا نشد.</p>';
   return {h:h,n:L.length};
+}
+function bankSuggest(){
+  var q=(S.bq||"").trim().toLowerCase(),el=document.getElementById("bsg");
+  if(!el)return;
+  if(!q){el.innerHTML="";el.style.display="none";return}
+  var seen={},out=[];
+  S.cards.forEach(function(c){
+    if(!matchF(c,S.bf||{}))return;
+    var h=qaSplit(c).q,v=scoreCard(c,q);
+    if(v<45||seen[h.toLowerCase()])return;
+    seen[h.toLowerCase()]=1;out.push([v,h]);
+  });
+  out.sort(function(a,b){return b[0]-a[0]||a[1].length-b[1].length||(a[1]<b[1]?-1:1)});
+  out=out.slice(0,8);
+  if(!out.length||(out.length===1&&out[0][1].toLowerCase()===q)){el.innerHTML="";el.style.display="none";return}
+  el.style.display="block";
+  el.innerHTML=out.map(function(o){return '<button type="button" class="sgi" data-sg="'+esc(o[1])+'" dir="auto">'+hl(o[1],q)+'</button>'}).join("");
+  [].forEach.call(el.querySelectorAll("[data-sg]"),function(b){b.onclick=function(){
+    var inp=document.getElementById("bq");S.bq=b.dataset.sg;if(inp)inp.value=S.bq;S.bn=100;bankUpdate();
+  }});
 }
 function bankUpdate(){
   var r=bankRows(),el=document.getElementById("bl"),ct=document.getElementById("bc");
   if(!el)return;el.innerHTML=r.h;if(ct)ct.textContent=fa(r.n)+" از "+fa(S.cards.length)+" کلمه";
   [].forEach.call(el.querySelectorAll("[data-b]"),function(b){b.onclick=function(){S.bankId=b.dataset.b;S.bankShow=true;S.bankY=window.scrollY;renderBank();window.scrollTo(0,0)}});
   var mb=document.getElementById("bmore");if(mb)mb.onclick=function(){S.bn=(S.bn||100)+100;bankUpdate()};
+  bankSuggest();
 }
 function renderBank(){
   if(S.phase==="boot"||S.phase==="loading"){app.innerHTML='<div class="panel"><p class="muted">در حال خواندن کارت‌ها از شیت…</p></div>';return}
   if(S.bankId)return renderBankCard();
   var F=facets(S.cards),ff=S.bf||(S.bf={});
   var h='<div class="panel"><h2>بانک لغات</h2><p class="muted" id="bc"></p>';
-  h+='<div><label class="f">جستجو</label><input type="text" id="bq" value="'+esc(S.bq||"")+'" placeholder="کلمه، معنی یا مثال" dir="auto"></div>';
+  h+='<div><label class="f">جستجو</label><input type="text" id="bq" value="'+esc(S.bq||"")+'" placeholder="کلمه، معنی یا مثال" dir="auto" autocomplete="off"><div id="bsg" class="sg" style="display:none"></div></div>';
   h+='<div style="margin-top:10px"><label class="f">مرتب‌سازی</label><select id="bs">'+Object.keys(BS).map(function(k){return '<option value="'+k+'"'+((S.bs||"sheet")===k?" selected":"")+'>'+BS[k]+'</option>'}).join("")+'</select></div>';
   if(F.length)h+='<details class="adv"'+(Object.keys(ff).some(function(k){return ff[k]})?" open":"")+'><summary>فیلتر (فصل، سکشن، نوع و…)</summary><div class="facets">'+facetHtml(F,ff,"bf")+'</div></details>';
   h+='<div id="bl" style="margin-top:12px"></div></div>';
