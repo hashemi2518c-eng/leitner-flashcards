@@ -662,19 +662,14 @@ function boxPanel(b){
   return h+'</div>';
 }
 function totalChart(){
-  var f=S.prog.filter||[],ff=S.prog.ff||{},tabsOn=[],P=S.prog.p;
-  S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(tb){if(tb.on&&(!f.length||f.indexOf(tb.tid)>=0))tabsOn.push(tb)})});
-  var rows=tabsOn.map(function(tb){var d=[0,0,0,0,0,0];S.cards.forEach(function(c){if(c.tid!==tb.tid||!matchF(c,ff))return;var x=P[c.id];d[x?x[0]:0]++});return {l:tb.label||tb.title,d:d,n:d.reduce(function(a,b){return a+b},0)}});
-  if(!rows.length)return "";
-  var tot=[0,0,0,0,0,0];rows.forEach(function(r){r.d.forEach(function(v,i){tot[i]+=v})});
-  var all=tot.reduce(function(a,b){return a+b},0);if(rows.length>1)rows.push({l:"جمع همه",d:tot,n:all,sum:1});
-  var mx=Math.max.apply(null,rows.map(function(r){return r.n}).concat([1])),nm=["جدید","جعبه ۱","جعبه ۲","جعبه ۳","جعبه ۴","جعبه ۵"];
+  var P=S.prog.p,d=[0,0,0,0,0,0];
+  active().forEach(function(c){var x=P[c.id];d[x?x[0]:0]++});
+  var n=d.reduce(function(a,b){return a+b},0);if(!n)return "";
+  var nm=["جدید","جعبه ۱","جعبه ۲","جعبه ۳","جعبه ۴","جعبه ۵"];
   function col(i){return i?'var(--bar'+i+')':'var(--orange)'}
-  var h='<div class="tot"><div class="sub">جمع کل جعبه‌ها بر اساس سرفصل</div><div class="lgd">'+nm.map(function(x,i){return '<span><i style="background:'+col(i)+'"></i>'+x+'</span>'}).join("")+'</div>';
-  rows.forEach(function(r){
-    h+='<div class="trow'+(r.sum?' sum':'')+'"><div class="tl"><span>'+esc(r.l)+'</span><b>'+fa(r.n)+'</b></div><div class="stk" style="width:'+Math.max(3,Math.round(100*r.n/mx))+'%">'+r.d.map(function(v,i){return v?'<i title="'+nm[i]+': '+v+'" style="flex:'+v+';background:'+col(i)+'"></i>':''}).join("")+'</div><div class="tdt">'+r.d.map(function(v,i){return v?nm[i]+': '+fa(v):''}).filter(Boolean).join(" · ")+'</div></div>';
-  });
-  return h+'</div>';
+  var h='<div class="tot"><div class="tl"><span class="sub" style="margin:0">جمع کل</span><b>'+fa(n)+' کلمه</b></div><div class="stk" style="margin-top:6px">'+d.map(function(v,i){return v?'<i title="'+nm[i]+': '+v+'" style="flex:'+v+';background:'+col(i)+'"></i>':''}).join("")+'</div>';
+  h+='<div class="lgd" style="margin:8px 0 0"><span><i style="background:'+col(0)+'"></i>جدید (هنوز در جعبه نیست): '+fa(d[0])+'</span><span><i style="background:var(--bar3)"></i>در جعبه‌ها: '+fa(n-d[0])+'</span></div></div>';
+  return h;
 }
 function chipsHtml(ff,pre){return Object.keys(ff||{}).filter(function(k){return ff[k]}).map(function(k){return '<button type="button" class="achip" dir="ltr" title="حذف فیلتر" data-'+pre+'="'+esc(k)+'">'+esc(k)+': '+esc(ff[k])+' <b>×</b></button>'}).join("")}
 function secHead(ic,t,sub){return '<div class="sh"><span class="shi">'+ic+'</span><div><h2>'+esc(t)+'</h2>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div></div>'}
