@@ -501,7 +501,7 @@ function render(){
   renderPractice();
 }
 function exItems(t){return String(t||"").split(/\n(?=\d+\)\s)/).map(function(x){var m=/^(\d+)\)\s*([\s\S]*)$/.exec(x.trim());return m?{n:m[1],t:m[2].trim()}:{n:"",t:x.trim()}})}
-function exLabels(ref){var o={};String(ref||"").split(/\n(?=\d+\)\s)/).forEach(function(x){var m=/^(\d+)\)/.exec(x.trim());if(!m)return;var sx=/سکشن\s*(\d+)/.exec(x),px=/صفحه\s*(\d+)/.exec(x);if(sx||px)o[m[1]]=(sx?"S"+sx[1]:"")+(sx&&px?" - ":"")+(px?"P"+px[1]:"")});return o}
+function exLabels(ref){var o={};String(ref||"").split(/\n(?=\d+\)\s)/).forEach(function(x){var m=/^(\d+)\)/.exec(x.trim());if(!m)return;var sx=/سکشن\s*(\d+)/.exec(x),rx=/قانون\s*(\d+-[\w.()\-]+)/.exec(x),px=/صفحه\s*(\d+)/.exec(x),w=[];if(sx)w.push("S"+sx[1]);if(rx)w.push("R"+rx[1]);if(px)w.push("P"+px[1]);if(w.length)o[m[1]]=w.join(" - ")});return o}
 function exHtml(c){
   var L=exLabels(c.ref);
   if(!Object.keys(L).length)return '<div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'');
