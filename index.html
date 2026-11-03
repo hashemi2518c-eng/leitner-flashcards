@@ -59,7 +59,8 @@ button,select,input{font:inherit;color:inherit}
 .btn.hard{background:var(--hard-soft);border-color:var(--hard-line);color:var(--hard-ink)}
 .btn.known{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-ink)}
 .btn.sm{min-height:44px;padding:0 14px;font-size:13px}
-.tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.tm{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-en);font-size:13px;color:var(--ink2);padding:0 6px;direction:ltr;font-variant-numeric:tabular-nums}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
+.tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.adv{margin-top:12px}.adv summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13px;font-weight:500}.facets{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.card.paused .cb{opacity:.3;filter:blur(4px);pointer-events:none}.brow{width:100%;text-align:start}
+.tm{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-en);font-size:13px;color:var(--ink2);padding:0 6px;direction:ltr;font-variant-numeric:tabular-nums}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
 @media (hover:none){.kb{display:none}}
 @media (min-width:768px){.wrap{max-width:680px}}
 .btn:focus-visible,input:focus-visible,select:focus-visible,.chip:focus-visible,.fil:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
@@ -118,6 +119,7 @@ svg.ic{width:18px;height:18px;flex:none}
     <div class="ttl"><h1>فلش‌کارت لایتنر</h1><small id="sub">Leitner · daily practice</small></div>
     <nav class="nav">
       <button class="chip" id="nav-p" aria-pressed="true">تمرین</button>
+      <button class="chip" id="nav-b" aria-pressed="false">بانک لغات</button>
       <button class="chip" id="nav-a" aria-pressed="false">مرور خودکار</button>
       <button class="chip" id="nav-h" aria-pressed="false">تاریخچه</button>
       <button class="chip" id="nav-s" aria-pressed="false">تنظیمات</button>
@@ -164,7 +166,7 @@ function addLog(c,known,box,rep,round){
   if(c.sid){(S.logBuf[c.sid]||(S.logBuf[c.sid]=[])).push([d,nowHM(),round,c.label,c.front,known?"بلد":"سخت",box,rep?"مرور مجدد":"دوره‌ی اول"])}
   var D=S.prog.days||(S.prog.days={}),x=D[d]||(D[d]={n:0,k:0,h:0,r:0});
   x.n++;if(known)x.k++;else x.h++;x.r=Math.max(x.r,round);
-  var ks=Object.keys(D).sort();while(ks.length>120)delete D[ks.shift()];
+  var ks=Object.keys(D).sort();while(ks.length>120){delete D[ks.shift()];S.prog.dx=(S.prog.dx||0)+1}
 }
 function srcOf(sid){for(var i=0;i<S.cfg.sources.length;i++)if(S.cfg.sources[i].sid===sid)return S.cfg.sources[i];return null}
 function ensureTabs(sid){
@@ -299,15 +301,17 @@ function pickCols(h){
 }
 function colName(i,h){return String.fromCharCode(65+i)+(h[i]?" · "+h[i]:"")}
 
-function cardSig(){var a=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(t){if(t.on)a.push([sr.sid,sr.id,t.tid,t.title,t.label,t.front,t.back,t.struct,t.kw,t.cat,t.ex,t.exfa,t.speak])})});return JSON.stringify(a)}
+function cardSig(){var a=["v2"];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(t){if(t.on)a.push([sr.sid,sr.id,t.tid,t.title,t.label,t.front,t.back,t.struct,t.kw,t.cat,t.ex,t.exfa,t.speak])})});return JSON.stringify(a)}
+var FRE=/chapter|section|part|technique|type|level|category|cec|page|use|فصل|سرفصل|دسته|سکشن|صفحه|نوع/i,FEX=/example|ترجمه|مرجع|وضعیت|keyword|کلید|structure|ساختار|date|next|result|persian|meaning|pronunc|source|مثال/i;
 function buildCards(res,list){
   var out=[];
   list.forEach(function(q,k){
-    var rows=(res[k]&&res[k].values)||[],s=q.s,t=q.t;
+    var rows=(res[k]&&res[k].values)||[],s=q.s,t=q.t,hd=rows[0]||[],fcols=[];
+    hd.forEach(function(hh,ci){hh=String(hh||"").trim();if(hh&&hh.length<=40&&FRE.test(hh)&&!FEX.test(hh)&&[t.front,t.back,t.struct,t.kw,t.ex,t.exfa].indexOf(ci)<0)fcols.push([ci,hh])});
     for(var r=1;r<rows.length;r++){
       var g=function(c){return c==null||c<0?"":String(rows[r][c]==null?"":rows[r][c]).trim()};
       var a=g(t.front),b=g(t.back);
-      if(a&&b)out.push({id:s.sid+"_"+t.tid+"_"+(r+1),sid:s.sid,tid:t.tid,label:t.label||t.title,front:a,back:b,struct:g(t.struct),kw:g(t.kw),cat:g(t.cat),ex:g(t.ex),exfa:g(t.exfa),speak:t.speak||"front"});
+      if(a&&b)out.push({id:s.sid+"_"+t.tid+"_"+(r+1),sid:s.sid,tid:t.tid,label:t.label||t.title,front:a,back:b,struct:g(t.struct),kw:g(t.kw),cat:g(t.cat),ex:g(t.ex),exfa:g(t.exfa),speak:t.speak||"front",f:(function(){var o={};fcols.forEach(function(fc){var v=g(fc[0]);if(v)o[fc[1]]=v});return o})()});
     }
   });
   return out;
@@ -344,7 +348,12 @@ function loadCards(){
   });
 }
 function byId(id){for(var i=0;i<S.cards.length;i++)if(S.cards[i].id===id)return S.cards[i];return null}
-function active(){var f=S.prog.filter||[];return f.length?S.cards.filter(function(c){return f.indexOf(c.tid)>=0}):S.cards}
+function matchF(c,ff){for(var k in ff){if(ff[k]&&(!c.f||c.f[k]!==ff[k]))return false}return true}
+function tabCards(){var f=S.prog.filter||[];return f.length?S.cards.filter(function(c){return f.indexOf(c.tid)>=0}):S.cards}
+function active(){var ff=S.prog.ff||{};return tabCards().filter(function(c){return matchF(c,ff)})}
+function facets(cards){var H={},order=[];cards.forEach(function(c){for(var k in c.f){if(!H[k]){H[k]={};order.push(k)}var v=c.f[k];H[k][v]=(H[k][v]||0)+1}});return order.filter(function(k){var n=Object.keys(H[k]).length;return n>1&&n<=400}).map(function(k){var vs=Object.keys(H[k]);vs.sort(function(a,b){var x=parseFloat(a),y=parseFloat(b);if(!isNaN(x)&&!isNaN(y)&&x!==y)return x-y;return a<b?-1:a>b?1:0});return {k:k,vs:vs,n:H[k]}})}
+function facetHtml(F,sel,pre){return F.map(function(f,i){return '<div><label class="f">'+esc(f.k)+'</label><select data-'+pre+'="'+i+'"><option value="">همه</option>'+f.vs.map(function(v){return '<option value="'+esc(v)+'"'+(sel[f.k]===v?' selected':'')+'>'+esc(v)+' ('+fa(f.n[v])+')</option>'}).join("")+'</select></div>'}).join("")}
+function practiceDays(){var D=S.prog.days||{},n=S.prog.dx||0;Object.keys(D).forEach(function(k){if(D[k]&&D[k].n>0)n++});return n}
 function counts(){
   var t=today(),p=S.prog.p,due=0,nw=0;
   active().forEach(function(c){var x=p[c.id];if(!x)nw++;else if(x[1]<=t)due++});
@@ -425,7 +434,7 @@ function kwSpeak(t){return String(t||"").replace(/\|/g,". ").replace(/(^|\s)[+\-
 function isRev(c){return !!S.cfg.reverse&&!!c}
 function autoFront(){var c=cur();if(S.loopOn)return;if(c&&S.cfg.autoSpeak&&!isRev(c))speak(qaSplit(c).q)}
 function toggleRev(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderPractice();var c=cur();if(S.phase==="card"&&c&&!S.show)autoFront();if(S.phase==="card"&&c&&S.show&&isRev(c)&&S.cfg.autoSpeak)speak(qaSplit(c).all)}
-function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&isRev(c))speak(qaSplit(c).all)}
+function reveal(){if(S.paused)return;S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&isRev(c))speak(qaSplit(c).all)}
 function fmtClock(t){t=Math.max(0,Math.floor(t));var m=Math.floor(t/60),r=t%60;return (m<10?"0":"")+m+":"+(r<10?"0":"")+r}
 function fmtDur(t){var m=Math.round(t/60);if(m<1)return t>0?"کمتر از ۱ دقیقه":"۰ دقیقه";var h=Math.floor(m/60);m=m%60;return (h?fa(h)+" ساعت"+(m?" و ":""):"")+(m?fa(m)+" دقیقه":"")}
 function daySec(){var D=S.prog.days||{},x=D[today()];return x&&x.t||0}
@@ -434,7 +443,7 @@ function timeLine(){return '<p class="muted" style="margin-top:8px">⏱ امرو
 var lastAct=Date.now(),tickN=0;
 ["keydown","pointerdown","touchstart","scroll"].forEach(function(ev){document.addEventListener(ev,function(){lastAct=Date.now()},{passive:true,capture:true})});
 setInterval(function(){
-  if(document.visibilityState!=="visible"||!S.conn||S.view!=="practice"||S.phase!=="card"||!S.prog)return;
+  if(document.visibilityState!=="visible"||!S.conn||S.paused||S.view!=="practice"||S.phase!=="card"||!S.prog)return;
   if(!S.loopOn&&Date.now()-lastAct>120000)return;
   var D=S.prog.days||(S.prog.days={}),d=today(),x=D[d]||(D[d]={n:0,k:0,h:0,r:0});
   x.t=(x.t||0)+1;S.prog.tt=(S.prog.tt||0)+1;
@@ -444,21 +453,22 @@ setInterval(function(){
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"&&S.prog&&S.conn&&tickN%30!==0)saveDoc("progress",S.prog)});
 function loopText(){var c=cur();if(!c)return "";var qa=qaSplit(c),rv=isRev(c);if(rv&&!S.show)return "";if(S.show&&qa.qa&&qa.a)return qa.a;return qa.qa?qa.q:enText(c)}
 function loopRun(tok){
-  if(tok!==S.loopTok||!S.loopOn||S.view!=="practice"||S.phase!=="card")return;
+  if(tok!==S.loopTok||!S.loopOn||S.paused||S.view!=="practice"||S.phase!=="card")return;
   var t=loopText();if(!t){setTimeout(function(){loopRun(tok)},800);return}
   speak(t,false,function(){setTimeout(function(){loopRun(tok)},1400)});
 }
 function loopStart(){S.loopTok=(S.loopTok||0)+1;if(S.loopOn)loopRun(S.loopTok)}
 function loopStop(){S.loopTok=(S.loopTok||0)+1;try{speechSynthesis.cancel()}catch(e){}}
+function togglePause(){S.paused=!S.paused;if(S.paused)loopStop();renderPractice()}
 function toggleLoop(){S.loopOn=!S.loopOn;if(S.loopOn)loopStart();else loopStop();renderPractice()}
 document.addEventListener("keydown",function(e){
   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;
   var tg=e.target&&e.target.tagName;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT")return;
   if(S.view!=="practice"||S.phase!=="card"||!cur())return;
   var k=e.key,m={"۰":"0","۱":"1","۲":"2"};if(m[k])k=m[k];
-  if(k==="0"){if(!S.show){e.preventDefault();reveal()}}
-  else if(k==="1"){if(S.show){e.preventDefault();answer(true)}}
-  else if(k==="2"){if(S.show){e.preventDefault();answer(false)}}
+  if(k==="p"||k==="P"){e.preventDefault();togglePause();return}
+  if(S.paused)return;
+  if(k==="1"||k==="2"){e.preventDefault();if(!S.show)reveal();else answer(k==="1")}
 });
 function answer(known){
   var s=S.prog.session,id=s.ids[S.idx],x=S.prog.p[id],box,c=byId(id);
@@ -480,11 +490,100 @@ function render(){
   document.getElementById("nav-s").setAttribute("aria-pressed",S.view==="setup");
   document.getElementById("nav-h").setAttribute("aria-pressed",S.view==="hist");
   document.getElementById("nav-a").setAttribute("aria-pressed",S.view==="auto");
+  document.getElementById("nav-b").setAttribute("aria-pressed",S.view==="bank");
   document.getElementById("sub").textContent=new Date().toLocaleDateString("fa-IR",{weekday:"long",day:"numeric",month:"long"});
   if(S.view==="setup")return renderSetup();
   if(S.view==="hist")return renderHist();
   if(S.view==="auto")return renderAuto();
+  if(S.view==="bank")return renderBank();
   renderPractice();
+}
+function cardPanel(c,show,tags,mode){
+  var h='',ex=!!c.struct,rv=isRev(c),qa=qaSplit(c);
+  h+='<div class="panel card'+(mode==="p"&&S.paused?' paused':'')+'"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+tags+'</div>';
+  h+='<div class="cb'+(ex?' ex':'')+'">';
+  h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?faOf(c):enOf(c))+'</div></div>';
+  if(qa.qa)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن سؤال (انگلیسی)</span></button></div>';
+  else if(!rv)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
+  if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div>'+kwHtml(c.kw)+'</div><div style="margin-top:8px"><button class="btn sm" id="spkw">'+ICON+'<span>شنیدن کلیدواژه‌ها (انگلیسی)</span></button></div></div>';
+  if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
+  if(show){
+    if(rv)h+='<div><div class="lab">'+(hasFa(enOf(c))?'Persian · فارسی':'English')+'</div><div class="blk ans en" dir="auto" style="font-size:22px;text-align:center">'+esc(enOf(c))+'</div></div>'+(qa.qa?'':'<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>');
+    else if(ex)h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(faOf(c))+'</div></div>';
+    else h+='<div class="back" dir="auto">'+esc(faOf(c))+'</div>';
+    if(qa.qa&&qa.a)h+='<div><button class="btn sm" id="spa">'+ICON+'<span>شنیدن جواب (انگلیسی)</span></button></div>';
+    if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start"><div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'')+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال (انگلیسی)</span></button></div></div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+function bindCard(c){var qa=qaSplit(c);
+  var sk=document.getElementById("spk");if(sk)sk.onclick=function(){speak(qa.qa?qa.q:enText(c),true)};
+  var sw=document.getElementById("spkw");if(sw)sw.onclick=function(){speak(kwSpeak(c.kw),true)};
+  var sa=document.getElementById("spa");if(sa)sa.onclick=function(){speak(qa.a,true)};
+  var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
+}
+var BS={sheet:"ترتیب شیت",az:"الفبا (A تا Z)",box:"جعبه (کم به زیاد)",due:"سررسید (زودتر اول)"};
+function bankList(){
+  var q=(S.bq||"").trim().toLowerCase(),ff=S.bf||{},P=S.prog.p;
+  var L=S.cards.filter(function(c){
+    if(!matchF(c,ff))return false;
+    if(!q)return true;
+    return (c.front+" "+c.back+" "+c.ex+" "+c.exfa+" "+c.kw).toLowerCase().indexOf(q)>=0;
+  });
+  var m=S.bs||"sheet";
+  if(m==="az")L.sort(function(a,b){var x=enText(a).toLowerCase(),y=enText(b).toLowerCase();return x<y?-1:x>y?1:0});
+  else if(m==="box")L.sort(function(a,b){return (P[a.id]?P[a.id][0]:0)-(P[b.id]?P[b.id][0]:0)});
+  else if(m==="due")L.sort(function(a,b){var x=P[a.id]?P[a.id][1]:"9999",y=P[b.id]?P[b.id][1]:"9999";return x<y?-1:x>y?1:0});
+  return L;
+}
+function bankRows(){
+  var L=bankList(),n=S.bn||100,P=S.prog.p;
+  var h=L.slice(0,n).map(function(c){
+    var x=P[c.id],en=qaSplit(c).q,fz=faOf(c);
+    if(en.length>90)en=en.slice(0,90)+"…";if(fz.length>80)fz=fz.slice(0,80)+"…";
+    return '<button class="hrow brow" data-b="'+esc(c.id)+'"><span><b dir="ltr">'+esc(en)+'</b><br><small dir="auto">'+esc(fz)+'</small></span><span class="tag">'+(x?'جعبه '+fa(x[0]):'جدید')+'</span></button>';
+  }).join("");
+  if(L.length>n)h+='<p><button class="btn sm" id="bmore">نمایش بیشتر (۱۰۰ مورد دیگر)</button></p>';
+  if(!L.length)h='<p class="muted">موردی پیدا نشد.</p>';
+  return {h:h,n:L.length};
+}
+function bankUpdate(){
+  var r=bankRows(),el=document.getElementById("bl"),ct=document.getElementById("bc");
+  if(!el)return;el.innerHTML=r.h;if(ct)ct.textContent=fa(r.n)+" از "+fa(S.cards.length)+" کلمه";
+  [].forEach.call(el.querySelectorAll("[data-b]"),function(b){b.onclick=function(){S.bankId=b.dataset.b;S.bankShow=true;S.bankY=window.scrollY;renderBank();window.scrollTo(0,0)}});
+  var mb=document.getElementById("bmore");if(mb)mb.onclick=function(){S.bn=(S.bn||100)+100;bankUpdate()};
+}
+function renderBank(){
+  if(S.phase==="boot"||S.phase==="loading"){app.innerHTML='<div class="panel"><p class="muted">در حال خواندن کارت‌ها از شیت…</p></div>';return}
+  if(S.bankId)return renderBankCard();
+  var F=facets(S.cards),ff=S.bf||(S.bf={});
+  var h='<div class="panel"><h2>بانک لغات</h2><p class="muted" id="bc"></p>';
+  h+='<div><label class="f">جستجو</label><input type="text" id="bq" value="'+esc(S.bq||"")+'" placeholder="کلمه، معنی یا مثال" dir="auto"></div>';
+  h+='<div style="margin-top:10px"><label class="f">مرتب‌سازی</label><select id="bs">'+Object.keys(BS).map(function(k){return '<option value="'+k+'"'+((S.bs||"sheet")===k?" selected":"")+'>'+BS[k]+'</option>'}).join("")+'</select></div>';
+  if(F.length)h+='<details class="adv"'+(Object.keys(ff).some(function(k){return ff[k]})?" open":"")+'><summary>فیلتر (فصل، سکشن، نوع و…)</summary><div class="facets">'+facetHtml(F,ff,"bf")+'</div></details>';
+  h+='<div id="bl" style="margin-top:12px"></div></div>';
+  app.innerHTML=h;
+  document.getElementById("bq").oninput=function(){S.bq=this.value;S.bn=100;bankUpdate()};
+  document.getElementById("bs").onchange=function(){S.bs=this.value;S.bn=100;bankUpdate()};
+  [].forEach.call(app.querySelectorAll("[data-bf]"),function(el){el.onchange=function(){var f=F[+el.dataset.bf];if(el.value)ff[f.k]=el.value;else delete ff[f.k];S.bn=100;bankUpdate()}});
+  bankUpdate();
+  if(S.bankY){var y=S.bankY;S.bankY=0;setTimeout(function(){window.scrollTo(0,y)},0)}
+}
+function renderBankCard(){
+  var c=byId(S.bankId);if(!c){S.bankId=null;return renderBank()}
+  var x=S.prog.p[c.id],show=S.bankShow!==false;
+  var tags='<span class="tag box">'+(x?'جعبه '+fa(x[0])+' · سررسید '+esc(x[1]):'جدید')+'</span>';
+  var h='<div class="tb"><button class="btn sm tbb" id="bb">← BANK</button><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">EN ⇄ FA</button><button class="btn sm tbb" id="cl">TO CLAUDE</button></div>';
+  h+=cardPanel(c,show,tags,"b");
+  h+='<button class="btn go" id="bsh" style="width:100%">'+(show?"مخفی کردن پاسخ":"نمایش پاسخ")+'</button>';
+  var fk=Object.keys(c.f||{});
+  if(fk.length)h+='<p style="margin:12px 0 0">'+fk.map(function(k){return '<span class="tag cat">'+esc(k)+': '+esc(c.f[k])+'</span> '}).join("")+'</p>';
+  app.innerHTML=h;bindCard(c);
+  document.getElementById("bb").onclick=function(){S.bankId=null;renderBank()};
+  document.getElementById("bsh").onclick=function(){S.bankShow=!show;renderBankCard()};
+  document.getElementById("rvt").onclick=function(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderBankCard()};
+  var cl=document.getElementById("cl");cl.onclick=function(){sendToChat(c,cl)};
 }
 function renderPractice(){
   var h="";
@@ -498,42 +597,28 @@ function renderPractice(){
   var s=S.prog.session,t=today(),c=cur();
   if(S.phase==="card"&&c){
     var x=S.prog.p[c.id],ex=!!c.struct,rv=isRev(c),qa=qaSplit(c);
-    h+='<div class="tb"><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'" title="حالت برعکس">EN ⇄ FA</button><button class="btn sm tbb" id="lp" aria-pressed="'+!!S.loopOn+'" title="تکرار پیوسته‌ی تلفظ">🔁 '+ICON+'</button><button class="btn sm tbb" id="cl">TO CLAUDE</button><span class="tm" title="زمان کار امروز">⏱ <b id="tm">'+fmtClock(daySec())+'</b></span></div>';
+    h+='<div class="tb"><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'" title="حالت برعکس">EN ⇄ FA</button><button class="btn sm tbb" id="lp" aria-pressed="'+!!S.loopOn+'" title="تکرار پیوسته‌ی تلفظ">🔁 '+ICON+'</button><button class="btn sm tbb" id="cl">TO CLAUDE</button><span class="tm" title="زمان کار امروز">⏱ <b id="tm">'+fmtClock(daySec())+'</b></span><button class="btn sm tbb" id="ps" aria-pressed="'+!!S.paused+'" title="توقف / ادامه">'+(S.paused?'▶':'⏸')+' <span class="kb">P</span></button></div>';
     h+='<div class="prog"><i style="width:'+Math.round(100*S.idx/s.ids.length)+'%"></i></div>';
-    h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+(s.early?'<span class="tag cat">مرور جعبه‌ها</span>':s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span></div>';
-    h+='<div class="cb'+(ex?' ex':'')+'">';
-    h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?faOf(c):enOf(c))+'</div></div>';
-    if(qa.qa)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن سؤال (انگلیسی)</span></button></div>';
-    else if(!rv)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
-    if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div>'+kwHtml(c.kw)+'</div><div style="margin-top:8px"><button class="btn sm" id="spkw">'+ICON+'<span>شنیدن کلیدواژه‌ها (انگلیسی)</span></button></div></div>';
-    if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
-    if(S.show){
-      if(rv)h+='<div><div class="lab">'+(hasFa(enOf(c))?'Persian · فارسی':'English')+'</div><div class="blk ans en" dir="auto" style="font-size:22px;text-align:center">'+esc(enOf(c))+'</div></div>'+(qa.qa?'':'<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>');
-      else if(ex)h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(faOf(c))+'</div></div>';
-      else h+='<div class="back" dir="auto">'+esc(faOf(c))+'</div>';
-      if(qa.qa&&qa.a)h+='<div><button class="btn sm" id="spa">'+ICON+'<span>شنیدن جواب (انگلیسی)</span></button></div>';
-      if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start"><div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'')+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال (انگلیسی)</span></button></div></div>';
-    }
-    h+='</div></div>';
-    if(!S.show)h+='<button class="btn go" id="rev" style="width:100%">نمایش پاسخ <span class="kb">0</span></button>';
-    else h+='<div class="grid2"><button class="btn hard" id="no">سخت بود <span class="kb">2</span></button><button class="btn known" id="yes">بلد بودم <span class="kb">1</span></button></div>';
+    h+=cardPanel(c,S.show,(s.early?'<span class="tag cat">مرور جعبه‌ها</span>':s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span>',"p");
+    var dis=S.paused?' disabled':'';
+    if(!S.show)h+='<button class="btn go" id="rev" style="width:100%"'+dis+'>نمایش پاسخ <span class="kb">1 · 2</span></button>';
+    else h+='<div class="grid2"><button class="btn hard" id="no"'+dis+'>سخت بود <span class="kb">2</span></button><button class="btn known" id="yes"'+dis+'>بلد بودم <span class="kb">1</span></button></div>';
     app.innerHTML=h;
-    var sk=document.getElementById("spk");if(sk)sk.onclick=function(){speak(qa.qa?qa.q:enText(c),true)};
-    var sw=document.getElementById("spkw");if(sw)sw.onclick=function(){speak(kwSpeak(c.kw),true)};
-    var sa=document.getElementById("spa");if(sa)sa.onclick=function(){speak(qa.a,true)};
-    var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
+    bindCard(c);
     var rt=document.getElementById("rvt");if(rt)rt.onclick=toggleRev;
     var cl=document.getElementById("cl");if(cl)cl.onclick=function(){sendToChat(c,cl)};
     var lpb=document.getElementById("lp");if(lpb)lpb.onclick=toggleLoop;
-    if(S.loopOn)loopStart();
+    var psb=document.getElementById("ps");if(psb)psb.onclick=togglePause;
+    if(S.loopOn&&!S.paused)loopStart();
     var r=document.getElementById("rev");if(r)r.onclick=reveal;
     var y=document.getElementById("yes");if(y){y.onclick=function(){answer(true)};document.getElementById("no").onclick=function(){answer(false)}}
     return;
   }
-  S.loopTok=(S.loopTok||0)+1;
+  S.loopTok=(S.loopTok||0)+1;S.paused=false;
   var pl=plan(),nd=pl.dn,nn=pl.nn;
   var finished=s&&s.date===t&&s.ids&&s.ids.length&&S.idx>=s.ids.length;
   h+='<div class="panel"><h2>'+(finished?'تمرین امروز تمام شد':'تمرین امروز')+'</h2>';
+  h+='<div class="stats" style="grid-template-columns:repeat(2,1fr);margin-bottom:10px"><div class="stat"><b>'+fa(practiceDays())+'</b><span class="muted">روز تمرین</span></div><div class="stat"><b>'+fa(S.cards.length)+'</b><span class="muted">کل کلمات بانک</span></div></div>';
   var dy=S.prog.day,dr=(dy&&dy.date===t)?dy.rounds:0,R=S.cfg.rounds||1;
   if(finished){
     h+=timeLine();
@@ -553,8 +638,10 @@ function renderPractice(){
   var tabs=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(tb){if(tb.on)tabs.push(tb)})});
   if(tabs.length>1){
     var f=S.prog.filter||[];
-    h+='<div class="lab">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه</button>'+tabs.map(function(tb){return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+'</button>'}).join("")+'</div>';
+    h+='<div class="lab">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه</button>'+tabs.map(function(tb){var cn=S.cards.filter(function(c){return c.tid===tb.tid}).length;return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+' ('+fa(cn)+')</button>'}).join("")+'</div>';
   }
+  var ffs=S.prog.ff||{},FF=facets(tabCards());
+  if(FF.length)h+='<details class="adv"'+(Object.keys(ffs).some(function(k){return ffs[k]})?' open':'')+'><summary>فیلتر پیشرفته (فصل، سکشن، نوع و…)</summary><div class="facets">'+facetHtml(FF,ffs,"pf")+'</div><p class="muted" style="margin:6px 0 0">'+fa(active().length)+' کلمه با این فیلترها</p></details>';
   var total=nd+nn,resume=s&&s.date===t&&S.idx>0&&S.idx<(s.ids||[]).length;
   h+='<p style="margin:12px 0 0"><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">حالت برعکس (فارسی ← انگلیسی): '+(S.cfg.reverse?"روشن":"خاموش")+'</button></p>';
   if(!finished)h+=(total||resume)?'<button class="btn go" id="start" style="width:100%">'+(resume?'ادامه تمرین':'شروع تمرین')+'</button>':'<p class="muted">امروز کارتی برای مرور نیست.</p>';
@@ -569,6 +656,11 @@ function renderPractice(){
   var eb=document.getElementById("early");if(eb)eb.onclick=startEarly;
   var nb=document.getElementById("nextb");if(nb)nb.onclick=function(){startSession(true)};
   var rb=document.getElementById("rebuild");if(rb)rb.onclick=function(){resetSession();renderPractice()};
+  [].forEach.call(app.querySelectorAll("[data-pf]"),function(el){el.onchange=function(){
+    var ff=S.prog.ff||(S.prog.ff={}),f=FF[+el.dataset.pf];
+    if(el.value)ff[f.k]=el.value;else delete ff[f.k];
+    resetSession();renderPractice();
+  }});
   [].forEach.call(app.querySelectorAll("[data-f]"),function(el){el.onclick=function(){
     var f=S.prog.filter||[],k=el.dataset.f;
     if(k==="*")f=[];else{var i=f.indexOf(k);if(i>=0)f.splice(i,1);else f.push(k)}
@@ -919,7 +1011,7 @@ function saveSetup(){
   if(bad){note("ستون‌های یکی از تب‌ها هنوز خوانده نشده. چند ثانیه صبر کن و دوباره ذخیره کن.");return}
   if(!d.sources.some(function(s){return s.tabs.some(function(t){return t.on})})){note("حداقل یک تب را انتخاب کن.");return}
   S.cfg.sources=JSON.parse(JSON.stringify(d.sources));S.draft=null;
-  S.prog.session=null;S.prog.day=null;S.prog.filter=[];S.idx=0;
+  S.prog.session=null;S.prog.day=null;S.prog.filter=[];S.prog.ff={};S.idx=0;
   clearTimeout(S.timer);
   saveDoc("config",S.cfg);saveDoc("progress",S.prog);
   note("تنظیمات ذخیره شد.",true);
@@ -929,11 +1021,12 @@ function go(v){if(v!=="practice")S.loopTok=(S.loopTok||0)+1;if(S.view==="auto"&&
 document.getElementById("nav-p").onclick=function(){go("practice")};
 document.getElementById("nav-s").onclick=function(){go("setup")};
 document.getElementById("nav-a").onclick=function(){go("auto")};
+document.getElementById("nav-b").onclick=function(){S.bankId=null;go("bank")};
 document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
   if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
-  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0};
+  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0,dx:p.dx||0,ff:p.ff||{}};
   if(l)S.logs[today()]=l;
 }
 function startCards(){if(S.cfg.sources.length){loadCards()}else{S.view="setup";S.phase="idle";render()}}
