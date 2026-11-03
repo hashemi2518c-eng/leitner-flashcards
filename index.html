@@ -59,7 +59,7 @@ button,select,input{font:inherit;color:inherit}
 .btn.hard{background:var(--hard-soft);border-color:var(--hard-line);color:var(--hard-ink)}
 .btn.known{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-ink)}
 .btn.sm{min-height:44px;padding:0 14px;font-size:13px}
-.tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
+.tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.tm{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-en);font-size:13px;color:var(--ink2);padding:0 6px;direction:ltr;font-variant-numeric:tabular-nums}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
 @media (hover:none){.kb{display:none}}
 @media (min-width:768px){.wrap{max-width:680px}}
 .btn:focus-visible,input:focus-visible,select:focus-visible,.chip:focus-visible,.fil:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
@@ -426,6 +426,22 @@ function isRev(c){return !!S.cfg.reverse&&!!c}
 function autoFront(){var c=cur();if(S.loopOn)return;if(c&&S.cfg.autoSpeak&&!isRev(c))speak(qaSplit(c).q)}
 function toggleRev(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderPractice();var c=cur();if(S.phase==="card"&&c&&!S.show)autoFront();if(S.phase==="card"&&c&&S.show&&isRev(c)&&S.cfg.autoSpeak)speak(qaSplit(c).all)}
 function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&isRev(c))speak(qaSplit(c).all)}
+function fmtClock(t){t=Math.max(0,Math.floor(t));var m=Math.floor(t/60),r=t%60;return (m<10?"0":"")+m+":"+(r<10?"0":"")+r}
+function fmtDur(t){var m=Math.round(t/60);if(m<1)return t>0?"کمتر از ۱ دقیقه":"۰ دقیقه";var h=Math.floor(m/60);m=m%60;return (h?fa(h)+" ساعت"+(m?" و ":""):"")+(m?fa(m)+" دقیقه":"")}
+function daySec(){var D=S.prog.days||{},x=D[today()];return x&&x.t||0}
+function allSec(){return S.prog.tt||0}
+function timeLine(){return '<p class="muted" style="margin-top:8px">⏱ امروز: <b>'+fmtDur(daySec())+'</b> · کل: <b>'+fmtDur(allSec())+'</b></p>'}
+var lastAct=Date.now(),tickN=0;
+["keydown","pointerdown","touchstart","scroll"].forEach(function(ev){document.addEventListener(ev,function(){lastAct=Date.now()},{passive:true,capture:true})});
+setInterval(function(){
+  if(document.visibilityState!=="visible"||!S.conn||S.view!=="practice"||S.phase!=="card"||!S.prog)return;
+  if(!S.loopOn&&Date.now()-lastAct>120000)return;
+  var D=S.prog.days||(S.prog.days={}),d=today(),x=D[d]||(D[d]={n:0,k:0,h:0,r:0});
+  x.t=(x.t||0)+1;S.prog.tt=(S.prog.tt||0)+1;
+  var el=document.getElementById("tm");if(el)el.textContent=fmtClock(x.t);
+  if(++tickN%30===0)saveDoc("progress",S.prog);
+},1000);
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"&&S.prog&&S.conn&&tickN%30!==0)saveDoc("progress",S.prog)});
 function loopText(){var c=cur();if(!c)return "";var qa=qaSplit(c),rv=isRev(c);if(rv&&!S.show)return "";if(S.show&&qa.qa&&qa.a)return qa.a;return qa.qa?qa.q:enText(c)}
 function loopRun(tok){
   if(tok!==S.loopTok||!S.loopOn||S.view!=="practice"||S.phase!=="card")return;
@@ -482,7 +498,7 @@ function renderPractice(){
   var s=S.prog.session,t=today(),c=cur();
   if(S.phase==="card"&&c){
     var x=S.prog.p[c.id],ex=!!c.struct,rv=isRev(c),qa=qaSplit(c);
-    h+='<div class="tb"><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'" title="حالت برعکس">EN ⇄ FA</button><button class="btn sm tbb" id="lp" aria-pressed="'+!!S.loopOn+'" title="تکرار پیوسته‌ی تلفظ">🔁 '+ICON+'</button><button class="btn sm tbb" id="cl">TO CLAUDE</button></div>';
+    h+='<div class="tb"><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'" title="حالت برعکس">EN ⇄ FA</button><button class="btn sm tbb" id="lp" aria-pressed="'+!!S.loopOn+'" title="تکرار پیوسته‌ی تلفظ">🔁 '+ICON+'</button><button class="btn sm tbb" id="cl">TO CLAUDE</button><span class="tm" title="زمان کار امروز">⏱ <b id="tm">'+fmtClock(daySec())+'</b></span></div>';
     h+='<div class="prog"><i style="width:'+Math.round(100*S.idx/s.ids.length)+'%"></i></div>';
     h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+(s.early?'<span class="tag cat">مرور جعبه‌ها</span>':s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span></div>';
     h+='<div class="cb'+(ex?' ex':'')+'">';
@@ -520,6 +536,7 @@ function renderPractice(){
   h+='<div class="panel"><h2>'+(finished?'تمرین امروز تمام شد':'تمرین امروز')+'</h2>';
   var dy=S.prog.day,dr=(dy&&dy.date===t)?dy.rounds:0,R=S.cfg.rounds||1;
   if(finished){
+    h+=timeLine();
     h+=s.early?'<p class="muted">مرور جعبه‌ها تمام شد · '+fa(s.ids.length)+' کارت.</p>':'<p class="muted">دوره '+fa(dr)+' از '+fa(R)+' تمام شد · '+fa(s.ids.length)+' کارت.'+(s.rep?'':' فردا کارت‌های سخت اول می‌آیند.')+'</p>';
     if(dr<R)h+='<p><button class="btn go" id="again" style="width:100%">دوره '+fa(dr+1)+': مرور مجدد کارت‌های امروز</button></p><p class="muted">اول کارت‌هایی که سخت بودند می‌آیند. هر مرور جعبه را به‌روز می‌کند، ولی هر کارت در یک روز فقط یک جعبه بالا می‌رود.</p>';
     if(nd+nn>0)h+='<p><button class="btn" id="nextb" style="width:100%">دسته‌ی بعدی: '+fa(nd)+' مرور و '+fa(nn)+' کارت جدید</button></p>';
@@ -634,7 +651,8 @@ function renderHist(){
     return;
   }
   if(!ks.length)h+='<p class="muted">هنوز تمرینی ثبت نشده. بعد از اولین تمرین، هر روز اینجا می‌آید.</p>';
-  ks.forEach(function(k){var x=D[k];h+='<button class="hrow" data-d="'+k+'"><span><b>'+esc(fdate(k))+'</b><br><small>'+fa(x.n)+' مرور · '+fa(x.k)+' بلد · '+fa(x.h)+' سخت</small></span><span class="tag">'+fa(x.r)+' دوره</span></button>'});
+  if(ks.length)h+=timeLine();
+  ks.forEach(function(k){var x=D[k];h+='<button class="hrow" data-d="'+k+'"><span><b>'+esc(fdate(k))+'</b><br><small>'+fa(x.n)+' مرور · '+fa(x.k)+' بلد · '+fa(x.h)+' سخت'+(x.t?' · ⏱ '+fmtDur(x.t):'')+'</small></span><span class="tag">'+fa(x.r)+' دوره</span></button>'});
   h+='</div>';app.innerHTML=h;
   [].forEach.call(app.querySelectorAll("[data-d]"),function(el){el.onclick=function(){openDay(el.dataset.d)}});
 }
@@ -915,7 +933,7 @@ document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
   if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
-  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{}};
+  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0};
   if(l)S.logs[today()]=l;
 }
 function startCards(){if(S.cfg.sources.length){loadCards()}else{S.view="setup";S.phase="idle";render()}}
