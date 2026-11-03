@@ -662,9 +662,8 @@ function boxPanel(b){
   return h+'</div>';
 }
 function totalChart(){
-  var d=boxCounts(),n=d.reduce(function(a,b){return a+b},0);
-  var h='<div class="tot"><div class="tl"><span class="sub" style="margin:0">جمع ۵ جعبه</span><b>'+fa(n)+' کلمه</b></div><div class="stk" style="margin-top:6px">'+d.map(function(v,i){return v?'<i title="جعبه '+(i+1)+': '+v+'" style="flex:'+v+';background:var(--bar'+(i+1)+')"></i>':''}).join("")+'</div></div>';
-  return h;
+  var d=boxCounts(),n=d.reduce(function(a,b){return a+b},0),tot=Math.max(active().length,n);
+  return '<div class="tot"><div class="tl"><span class="sub" style="margin:0">جمع ۵ جعبه از کل</span><b dir="ltr">'+fa(n)+' / '+fa(tot)+'</b></div><div class="stk" style="margin-top:6px">'+d.map(function(v,i){return v?'<i title="جعبه '+(i+1)+': '+v+'" style="flex:'+v+';background:var(--bar'+(i+1)+')"></i>':''}).join("")+(tot>n?'<i style="flex:'+(tot-n)+';background:transparent"></i>':'')+'</div></div>';
 }
 function chipsHtml(ff,pre){return Object.keys(ff||{}).filter(function(k){return ff[k]}).map(function(k){return '<button type="button" class="achip" dir="ltr" title="حذف فیلتر" data-'+pre+'="'+esc(k)+'">'+esc(k)+': '+esc(ff[k])+' <b>×</b></button>'}).join("")}
 function secHead(ic,t,sub){return '<div class="sh"><span class="shi">'+ic+'</span><div><h2>'+esc(t)+'</h2>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div></div>'}
