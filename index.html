@@ -77,7 +77,10 @@ label.f{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px}
 .stat{background:var(--bg);border-radius:8px;padding:12px}
 .stat b{display:block;font-size:26px;font-weight:500;line-height:1.2;font-variant-numeric:tabular-nums}
 .boxes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:end;margin:14px 0 4px}
-.bx{text-align:center;font-size:11px;color:var(--ink2)}
+.bx{text-align:center;font-size:11px;color:var(--ink2);background:none;border:1px solid transparent;border-radius:8px;font-family:inherit;cursor:pointer;padding:4px 2px}.bx[aria-pressed="true"]{border-color:var(--navy);background:var(--bg)}
+.boxpanel{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface)}.bph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.tot{margin-top:16px}.lgd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--ink2);margin:4px 0 8px}.lgd span{display:inline-flex;align-items:center;gap:4px}.lgd i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.trow{margin:0 0 10px}.trow.sum{border-top:1px solid var(--line);padding-top:8px}.tl{display:flex;justify-content:space-between;font-size:13px}.tl b{font-variant-numeric:tabular-nums}.stk{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line);margin-top:3px}.stk i{display:block;height:100%}.tdt{font-size:11px;color:var(--ink2);margin-top:2px}
 .bx i{display:block;border-radius:4px 4px 0 0;min-height:4px;margin:0 auto 4px;width:100%}
 .bx b{display:block;font-size:14px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
 .fils{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
@@ -626,16 +629,42 @@ function renderBankCard(){
   var c=byId(S.bankId);if(!c){S.bankId=null;return renderBank()}
   var x=S.prog.p[c.id],show=S.bankShow!==false;
   var tags='<span class="tag box">'+(x?'جعبه '+fa(x[0])+' · سررسید '+esc(x[1]):'جدید')+'</span>';
-  var h='<div class="tb"><button class="btn sm tbb" id="bb">← BANK</button><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">EN ⇄ FA</button><button class="btn sm tbb" id="cl">TO CLAUDE</button></div>';
+  var h='<div class="tb"><button class="btn sm tbb" id="bb">'+(S.bankFrom==="practice"?"← BACK":"← BANK")+'</button><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">EN ⇄ FA</button><button class="btn sm tbb" id="cl">TO CLAUDE</button></div>';
   h+=cardPanel(c,show,tags,"b");
   h+='<button class="btn go" id="bsh" style="width:100%">'+(show?"مخفی کردن پاسخ":"نمایش پاسخ")+'</button>';
   var fk=Object.keys(c.f||{});
   if(fk.length)h+='<p style="margin:12px 0 0">'+fk.map(function(k){return '<span class="tag cat">'+esc(k)+': '+esc(c.f[k])+'</span> '}).join("")+'</p>';
   app.innerHTML=h;bindCard(c);
-  document.getElementById("bb").onclick=function(){S.bankId=null;renderBank()};
+  document.getElementById("bb").onclick=function(){if(S.bankFrom==="practice"){S.bankFrom=null;S.bankId=null;go("practice")}else{S.bankId=null;renderBank()}};
   document.getElementById("bsh").onclick=function(){S.bankShow=!show;renderBankCard()};
   document.getElementById("rvt").onclick=function(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderBankCard()};
   var cl=document.getElementById("cl");cl.onclick=function(){sendToChat(c,cl)};
+}
+function boxPanel(b){
+  var P=S.prog.p,L=active().filter(function(c){var x=P[c.id];return x&&x[0]===b});
+  L.sort(function(a,c){var x=P[a.id][1],y=P[c.id][1];return x<y?-1:x>y?1:0});
+  var n=S.bxn||100;
+  var h='<div class="boxpanel"><div class="bph"><span><b>جعبه '+fa(b)+'</b> <span class="muted">('+fa(L.length)+' کلمه)</span></span><button class="btn sm" id="bxc">بستن</button></div>';
+  if(!L.length)h+='<p class="muted">این جعبه خالی است.</p>';
+  h+=L.slice(0,n).map(function(c){var en=qaSplit(c).q,fz=faOf(c);if(en.length>90)en=en.slice(0,90)+"…";if(fz.length>80)fz=fz.slice(0,80)+"…";
+    return '<button class="hrow brow" data-w="'+esc(c.id)+'"><span><b dir="ltr">'+esc(en)+'</b><br><small dir="auto">'+esc(fz)+'</small></span><span class="tag">'+esc(P[c.id][1])+'</span></button>'}).join("");
+  if(L.length>n)h+='<p><button class="btn sm" id="bxmore">نمایش بیشتر (۱۰۰ مورد دیگر)</button></p>';
+  return h+'</div>';
+}
+function totalChart(){
+  var f=S.prog.filter||[],ff=S.prog.ff||{},tabsOn=[],P=S.prog.p;
+  S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(tb){if(tb.on&&(!f.length||f.indexOf(tb.tid)>=0))tabsOn.push(tb)})});
+  var rows=tabsOn.map(function(tb){var d=[0,0,0,0,0,0];S.cards.forEach(function(c){if(c.tid!==tb.tid||!matchF(c,ff))return;var x=P[c.id];d[x?x[0]:0]++});return {l:tb.label||tb.title,d:d,n:d.reduce(function(a,b){return a+b},0)}});
+  if(!rows.length)return "";
+  var tot=[0,0,0,0,0,0];rows.forEach(function(r){r.d.forEach(function(v,i){tot[i]+=v})});
+  var all=tot.reduce(function(a,b){return a+b},0);if(rows.length>1)rows.push({l:"جمع همه",d:tot,n:all,sum:1});
+  var mx=Math.max.apply(null,rows.map(function(r){return r.n}).concat([1])),nm=["جدید","جعبه ۱","جعبه ۲","جعبه ۳","جعبه ۴","جعبه ۵"];
+  function col(i){return i?'var(--bar'+i+')':'var(--orange)'}
+  var h='<div class="tot"><div class="lab">جمع کل جعبه‌ها بر اساس سرفصل</div><div class="lgd">'+nm.map(function(x,i){return '<span><i style="background:'+col(i)+'"></i>'+x+'</span>'}).join("")+'</div>';
+  rows.forEach(function(r){
+    h+='<div class="trow'+(r.sum?' sum':'')+'"><div class="tl"><span>'+esc(r.l)+'</span><b>'+fa(r.n)+'</b></div><div class="stk" style="width:'+Math.max(3,Math.round(100*r.n/mx))+'%">'+r.d.map(function(v,i){return v?'<i title="'+nm[i]+': '+v+'" style="flex:'+v+';background:'+col(i)+'"></i>':''}).join("")+'</div><div class="tdt">'+r.d.map(function(v,i){return v?nm[i]+': '+fa(v):''}).filter(Boolean).join(" · ")+'</div></div>';
+  });
+  return h+'</div>';
 }
 function renderPractice(){
   var h="";
@@ -699,9 +728,16 @@ function renderPractice(){
   if(!finished)h+=(total||resume)?'<button class="btn go" id="start" style="width:100%">'+(resume?'ادامه تمرین':'شروع تمرین')+'</button>':'<p class="muted">امروز کارتی برای مرور نیست.</p>';
   if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
   var bc=boxCounts(),mx=Math.max.apply(null,bc.concat([1])),days=[1,2,4,7,14];
-  h+='<div class="boxes" aria-label="Leitner boxes">'+bc.map(function(v,i){return '<div class="bx"><b>'+fa(v)+'</b><i style="height:'+Math.max(4,Math.round(48*v/mx))+'px;background:var(--bar'+(i+1)+')"></i>جعبه '+fa(i+1)+'<br>'+fa(days[i])+' روز</div>'}).join("")+'</div>';
+  h+='<div class="boxes" aria-label="Leitner boxes">'+bc.map(function(v,i){return '<button class="bx" data-bx="'+(i+1)+'" aria-pressed="'+(S.boxOpen===i+1)+'"><b>'+fa(v)+'</b><i style="height:'+Math.max(4,Math.round(48*v/mx))+'px;background:var(--bar'+(i+1)+')"></i>جعبه '+fa(i+1)+'<br>'+fa(days[i])+' روز</button>'}).join("")+'</div>';
+  h+='<p class="muted" style="margin:4px 0 0;text-align:center;font-size:12px">روی هر جعبه بزن تا کلماتش را ببینی.</p>';
+  if(S.boxOpen)h+=boxPanel(S.boxOpen);
+  h+=totalChart();
   h+='</div>';
   app.innerHTML=h;
+  [].forEach.call(app.querySelectorAll("[data-bx]"),function(el){el.onclick=function(){var n=+el.dataset.bx;S.boxOpen=S.boxOpen===n?0:n;S.bxn=100;renderPractice()}});
+  [].forEach.call(app.querySelectorAll("[data-w]"),function(el){el.onclick=function(){S.bankId=el.dataset.w;S.bankShow=true;S.bankFrom="practice";go("bank");window.scrollTo(0,0)}});
+  var bxc=document.getElementById("bxc");if(bxc)bxc.onclick=function(){S.boxOpen=0;renderPractice()};
+  var bxm=document.getElementById("bxmore");if(bxm)bxm.onclick=function(){S.bxn=(S.bxn||100)+100;renderPractice()};
   var rt0=document.getElementById("rvt");if(rt0)rt0.onclick=toggleRev;
   var b=document.getElementById("start");if(b)b.onclick=startSession;
   var ag=document.getElementById("again");if(ag)ag.onclick=startRepeat;
@@ -1073,7 +1109,7 @@ function go(v){if(v!=="practice")S.loopTok=(S.loopTok||0)+1;if(S.view==="auto"&&
 document.getElementById("nav-p").onclick=function(){go("practice")};
 document.getElementById("nav-s").onclick=function(){go("setup")};
 document.getElementById("nav-a").onclick=function(){go("auto")};
-document.getElementById("nav-b").onclick=function(){S.bankId=null;go("bank")};
+document.getElementById("nav-b").onclick=function(){S.bankId=null;S.bankFrom=null;go("bank")};
 document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
