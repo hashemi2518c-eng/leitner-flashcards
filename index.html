@@ -59,6 +59,9 @@ button,select,input{font:inherit;color:inherit}
 .btn.hard{background:var(--hard-soft);border-color:var(--hard-line);color:var(--hard-ink)}
 .btn.known{background:var(--acc-soft);border-color:var(--acc);color:var(--acc-ink)}
 .btn.sm{min-height:44px;padding:0 14px;font-size:13px}
+.tb{display:flex;gap:8px;justify-content:center;margin:0 0 10px}.tbb{min-height:40px;padding:0 12px;font-size:12px;font-family:var(--font-en);font-weight:600;letter-spacing:.02em;direction:ltr}.tbb[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}.tbb svg{width:16px;height:16px}.kb{display:inline-block;min-width:20px;padding:0 5px;margin-inline-start:6px;border-radius:4px;border:1px solid currentColor;font-family:var(--font-en);font-size:12px;line-height:18px;opacity:.7}
+@media (hover:none){.kb{display:none}}
+@media (min-width:768px){.wrap{max-width:680px}}
 .btn:focus-visible,input:focus-visible,select:focus-visible,.chip:focus-visible,.fil:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 input[type=text],input[type=number],select{min-height:44px;width:100%;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
 input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc);flex:none}
@@ -86,7 +89,7 @@ label.f{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px}
 .tag.box{background:transparent;border:1px solid var(--line);color:var(--ink2);margin-inline-start:auto}
 .cb{padding:20px 16px;display:grid;gap:14px;text-align:center}
 .cb.ex{text-align:start}
-.q{font-size:22px;font-weight:500;line-height:1.45;overflow-wrap:anywhere;font-family:var(--font-en)}
+.q{font-size:22px;font-weight:500;line-height:1.45;overflow-wrap:anywhere;font-family:var(--font-en)}@media (min-width:768px){.q{font-size:28px}}
 .cb.ex .q{font-size:17px}
 .lab{font-size:11px;letter-spacing:.04em;color:var(--ink2);text-transform:uppercase;font-family:var(--font-en)}
 .blk{border-radius:8px;padding:12px;background:var(--bg);text-align:start;overflow-wrap:anywhere;white-space:pre-wrap}
@@ -271,7 +274,7 @@ function pickVoice(){
   return (us[0]||en[0]||null);
 }
 function noteLink(){msg.innerHTML='<div class="msg" role="status">این مرورگر تلفظ را پشتیبانی نمی‌کند. با Chrome یا Safari باز کن.</div>'}
-function speak(text,manual){
+function speak(text,manual,onend){
   if(!text)return;
   if(typeof SpeechSynthesisUtterance==="undefined"||!window.speechSynthesis){if(manual)noteLink();return}
   var started=false,parts=text.match(/[^.!?\n]+[.!?]*/g)||[text];
@@ -282,6 +285,7 @@ function speak(text,manual){
     var v=pickVoice();if(v)u.voice=v;
     u.onstart=function(){started=true;note("")};
     u.onerror=function(ev){if(manual&&ev&&ev.error&&ev.error!=="interrupted"&&ev.error!=="canceled")note("صدا پخش نشد ("+ev.error+"). اگر در گوشی هستی، صدای رسانه و حالت سکوت را چک کن.")};
+    if(onend&&i===parts.length-1)u.onend=function(){onend()};
     speechSynthesis.speak(u);
   });
   setTimeout(function(){if(manual&&!started&&!speechSynthesis.speaking&&!speechSynthesis.pending)noteLink()},1800);
@@ -411,17 +415,35 @@ function sendToChat(c,btn){
   var qa=qaSplit(c),x=S.prog.p[c.id],ts=new Date(),pad2=function(n){return (n<10?"0":"")+n};
   var stamp=ts.getFullYear()+"-"+pad2(ts.getMonth()+1)+"-"+pad2(ts.getDate())+" "+pad2(ts.getHours())+":"+pad2(ts.getMinutes())+":"+pad2(ts.getSeconds());
   var rows=[["Leitner practice | تمرین لایتنر","کارت فعلی برای تمرین با Claude"],["sent at | زمان ارسال",stamp],["status | وضعیت","new | جدید"],["tab | تب",c.label],["category | سرفصل",c.cat],["card id | شناسه",c.id],["front column | ستون روی کارت",c.front],["back column | ستون پشت کارت",c.back],["English question | سؤال انگلیسی",qa.qa?qa.q:enText(c)],["English answer | جواب انگلیسی",qa.qa?qa.a:enText(c)],["keywords | کلیدواژه‌ها",c.kw],["structure | ساختار",c.struct],["example EN | مثال انگلیسی",c.ex],["example FA | ترجمه مثال",c.exfa],["box | جعبه",x?String(x[0]):"new"]];
-  if(btn){btn.disabled=true;btn.textContent="در حال فرستادن…"}
+  if(btn){btn.disabled=true;btn.textContent="…"}
   api("update",{id:src.id,tab:CLTAB,values:rows}).then(function(){
     note("کارت فرستاده شد. در چت «تمرین لایتنر» بنویس: شروع",true);
-    if(btn){btn.disabled=false;btn.textContent="فرستاده شد ✓ · تمرین با Claude"}
-  }).catch(function(e){note(errText(e));if(btn){btn.disabled=false;btn.textContent="تمرین این کارت با Claude"}});
+    if(btn){btn.disabled=false;btn.textContent="SENT ✓"}
+  }).catch(function(e){note(errText(e));if(btn){btn.disabled=false;btn.textContent="TO CLAUDE"}});
 }
 function kwSpeak(t){return String(t||"").replace(/\|/g,". ").replace(/(^|\s)[+\-](?=\s)/g," ").replace(/\s*=\s*/g," means ").replace(/\s+/g," ").trim()}
 function isRev(c){return !!S.cfg.reverse&&!!c}
-function autoFront(){var c=cur();if(c&&S.cfg.autoSpeak&&!isRev(c))speak(qaSplit(c).q)}
+function autoFront(){var c=cur();if(S.loopOn)return;if(c&&S.cfg.autoSpeak&&!isRev(c))speak(qaSplit(c).q)}
 function toggleRev(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderPractice();var c=cur();if(S.phase==="card"&&c&&!S.show)autoFront();if(S.phase==="card"&&c&&S.show&&isRev(c)&&S.cfg.autoSpeak)speak(qaSplit(c).all)}
 function reveal(){S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&isRev(c))speak(qaSplit(c).all)}
+function loopText(){var c=cur();if(!c)return "";var qa=qaSplit(c),rv=isRev(c);if(rv&&!S.show)return "";if(S.show&&qa.qa&&qa.a)return qa.a;return qa.qa?qa.q:enText(c)}
+function loopRun(tok){
+  if(tok!==S.loopTok||!S.loopOn||S.view!=="practice"||S.phase!=="card")return;
+  var t=loopText();if(!t){setTimeout(function(){loopRun(tok)},800);return}
+  speak(t,false,function(){setTimeout(function(){loopRun(tok)},1400)});
+}
+function loopStart(){S.loopTok=(S.loopTok||0)+1;if(S.loopOn)loopRun(S.loopTok)}
+function loopStop(){S.loopTok=(S.loopTok||0)+1;try{speechSynthesis.cancel()}catch(e){}}
+function toggleLoop(){S.loopOn=!S.loopOn;if(S.loopOn)loopStart();else loopStop();renderPractice()}
+document.addEventListener("keydown",function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;
+  var tg=e.target&&e.target.tagName;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT")return;
+  if(S.view!=="practice"||S.phase!=="card"||!cur())return;
+  var k=e.key,m={"۰":"0","۱":"1","۲":"2"};if(m[k])k=m[k];
+  if(k==="0"){if(!S.show){e.preventDefault();reveal()}}
+  else if(k==="1"){if(S.show){e.preventDefault();answer(true)}}
+  else if(k==="2"){if(S.show){e.preventDefault();answer(false)}}
+});
 function answer(known){
   var s=S.prog.session,id=s.ids[S.idx],x=S.prog.p[id],box,c=byId(id);
   var td=today(),base=x?(x[2]===td?x[3]:x[0]):0;
@@ -460,6 +482,7 @@ function renderPractice(){
   var s=S.prog.session,t=today(),c=cur();
   if(S.phase==="card"&&c){
     var x=S.prog.p[c.id],ex=!!c.struct,rv=isRev(c),qa=qaSplit(c);
+    h+='<div class="tb"><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'" title="حالت برعکس">EN ⇄ FA</button><button class="btn sm tbb" id="lp" aria-pressed="'+!!S.loopOn+'" title="تکرار پیوسته‌ی تلفظ">🔁 '+ICON+'</button><button class="btn sm tbb" id="cl">TO CLAUDE</button></div>';
     h+='<div class="prog"><i style="width:'+Math.round(100*S.idx/s.ids.length)+'%"></i></div>';
     h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+(s.early?'<span class="tag cat">مرور جعبه‌ها</span>':s.rep?'<span class="tag cat">دوره '+fa(s.round)+' · مرور مجدد</span>':'')+'<span class="tag box">'+(x?'جعبه '+fa(x[0]):'جدید')+' · '+fa(S.idx+1)+' از '+fa(s.ids.length)+'</span></div>';
     h+='<div class="cb'+(ex?' ex':'')+'">';
@@ -476,10 +499,8 @@ function renderPractice(){
       if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start"><div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'')+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال (انگلیسی)</span></button></div></div>';
     }
     h+='</div></div>';
-    h+='<p style="margin:12px 0 0;text-align:center"><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">حالت برعکس (فارسی ← انگلیسی): '+(S.cfg.reverse?"روشن":"خاموش")+'</button></p>';
-    h+='<p style="margin:8px 0 0;text-align:center"><button class="btn sm" id="cl">تمرین این کارت با Claude</button></p>';
-    if(!S.show)h+='<button class="btn go" id="rev" style="width:100%">نمایش پاسخ</button>';
-    else h+='<div class="grid2"><button class="btn hard" id="no">سخت بود</button><button class="btn known" id="yes">بلد بودم</button></div>';
+    if(!S.show)h+='<button class="btn go" id="rev" style="width:100%">نمایش پاسخ <span class="kb">0</span></button>';
+    else h+='<div class="grid2"><button class="btn hard" id="no">سخت بود <span class="kb">2</span></button><button class="btn known" id="yes">بلد بودم <span class="kb">1</span></button></div>';
     app.innerHTML=h;
     var sk=document.getElementById("spk");if(sk)sk.onclick=function(){speak(qa.qa?qa.q:enText(c),true)};
     var sw=document.getElementById("spkw");if(sw)sw.onclick=function(){speak(kwSpeak(c.kw),true)};
@@ -487,10 +508,13 @@ function renderPractice(){
     var sx=document.getElementById("spx");if(sx)sx.onclick=function(){speak(c.ex,true)};
     var rt=document.getElementById("rvt");if(rt)rt.onclick=toggleRev;
     var cl=document.getElementById("cl");if(cl)cl.onclick=function(){sendToChat(c,cl)};
+    var lpb=document.getElementById("lp");if(lpb)lpb.onclick=toggleLoop;
+    if(S.loopOn)loopStart();
     var r=document.getElementById("rev");if(r)r.onclick=reveal;
     var y=document.getElementById("yes");if(y){y.onclick=function(){answer(true)};document.getElementById("no").onclick=function(){answer(false)}}
     return;
   }
+  S.loopTok=(S.loopTok||0)+1;
   var pl=plan(),nd=pl.dn,nn=pl.nn;
   var finished=s&&s.date===t&&s.ids&&s.ids.length&&S.idx>=s.ids.length;
   h+='<div class="panel"><h2>'+(finished?'تمرین امروز تمام شد':'تمرین امروز')+'</h2>';
@@ -883,7 +907,7 @@ function saveSetup(){
   note("تنظیمات ذخیره شد.",true);
   S.view="practice";loadCards();
 }
-function go(v){if(S.view==="auto"&&v!=="auto"&&S.auto)stopAuto();S.view=v;if(v==="setup"&&!S.draft)S.draft=JSON.parse(JSON.stringify(S.cfg));if(v==="practice"&&S.phase==="idle"&&!S.prog.session)S.show=false;note("");render()}
+function go(v){if(v!=="practice")S.loopTok=(S.loopTok||0)+1;if(S.view==="auto"&&v!=="auto"&&S.auto)stopAuto();S.view=v;if(v==="setup"&&!S.draft)S.draft=JSON.parse(JSON.stringify(S.cfg));if(v==="practice"&&S.phase==="idle"&&!S.prog.session)S.show=false;note("");render()}
 document.getElementById("nav-p").onclick=function(){go("practice")};
 document.getElementById("nav-s").onclick=function(){go("setup")};
 document.getElementById("nav-a").onclick=function(){go("auto")};
