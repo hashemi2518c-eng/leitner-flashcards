@@ -79,6 +79,9 @@ label.f{display:block;font-size:12px;color:var(--ink2);margin-bottom:4px}
 .boxes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:end;margin:14px 0 4px}
 .bx{text-align:center;font-size:11px;color:var(--ink2);background:none;border:1px solid transparent;border-radius:8px;font-family:inherit;cursor:pointer;padding:4px 2px}.bx[aria-pressed="true"]{border-color:var(--navy);background:var(--bg)}
 .boxpanel{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface)}.bph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.sh{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}.sh h2{margin:0;font-size:16px;font-weight:600}.sh small{display:block;color:var(--ink2);font-size:12px;font-weight:400;line-height:1.5}.shi{width:36px;height:36px;border-radius:10px;background:var(--acc-soft);display:grid;place-items:center;font-size:18px;flex:none}
+.dash{border-top:3px solid var(--orange)}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.kpi{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 4px;text-align:center}.kpi em{display:block;font-style:normal;font-size:16px;line-height:1.2}.kpi b{display:block;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.5;margin-top:2px}.kpi span{display:block;font-size:11px;color:var(--ink2);line-height:1.4}.mast{margin-top:14px}
+.sub{font-size:13px;font-weight:600;color:var(--ink);margin:14px 0 6px}.btn.hero{min-height:54px;font-size:16px;font-weight:600;width:100%}.mode{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:8px 12px;background:var(--bg);border-radius:10px;font-size:13px}.mode .btn[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}.stat.k b{color:var(--acc-ink)}.stat.h b{color:var(--hard-ink)}
 .tot{margin-top:16px}.lgd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--ink2);margin:4px 0 8px}.lgd span{display:inline-flex;align-items:center;gap:4px}.lgd i{display:inline-block;width:10px;height:10px;border-radius:2px}
 .trow{margin:0 0 10px}.trow.sum{border-top:1px solid var(--line);padding-top:8px}.tl{display:flex;justify-content:space-between;font-size:13px}.tl b{font-variant-numeric:tabular-nums}.stk{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line);margin-top:3px}.stk i{display:block;height:100%}.tdt{font-size:11px;color:var(--ink2);margin-top:2px}
 .bx i{display:block;border-radius:4px 4px 0 0;min-height:4px;margin:0 auto 4px;width:100%}
@@ -443,6 +446,7 @@ function toggleRev(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderPractice()
 function reveal(){if(S.paused)return;S.show=true;renderPractice();var c=cur();if(c&&S.cfg.autoSpeak&&isRev(c))speak(qaSplit(c).all)}
 function fmtClock(t){t=Math.max(0,Math.floor(t));var m=Math.floor(t/60),r=t%60;return (m<10?"0":"")+m+":"+(r<10?"0":"")+r}
 function fmtDur(t){var m=Math.round(t/60);if(m<1)return t>0?"کمتر از ۱ دقیقه":"۰ دقیقه";var h=Math.floor(m/60);m=m%60;return (h?fa(h)+" ساعت"+(m?" و ":""):"")+(m?fa(m)+" دقیقه":"")}
+function fmtDurS(t){var m=Math.round(t/60),h=Math.floor(m/60);m=m%60;return h?fa(h)+" ساعت "+fa(m)+" د":fa(m)+" دقیقه"}
 function daySec(){var D=S.prog.days||{},x=D[today()];return x&&x.t||0}
 function allSec(){return S.prog.tt||0}
 function timeLine(){return '<p class="muted" style="margin-top:8px">⏱ امروز: <b>'+fmtDur(daySec())+'</b> · کل: <b>'+fmtDur(allSec())+'</b></p>'}
@@ -660,12 +664,15 @@ function totalChart(){
   var all=tot.reduce(function(a,b){return a+b},0);if(rows.length>1)rows.push({l:"جمع همه",d:tot,n:all,sum:1});
   var mx=Math.max.apply(null,rows.map(function(r){return r.n}).concat([1])),nm=["جدید","جعبه ۱","جعبه ۲","جعبه ۳","جعبه ۴","جعبه ۵"];
   function col(i){return i?'var(--bar'+i+')':'var(--orange)'}
-  var h='<div class="tot"><div class="lab">جمع کل جعبه‌ها بر اساس سرفصل</div><div class="lgd">'+nm.map(function(x,i){return '<span><i style="background:'+col(i)+'"></i>'+x+'</span>'}).join("")+'</div>';
+  var h='<div class="tot"><div class="sub">جمع کل جعبه‌ها بر اساس سرفصل</div><div class="lgd">'+nm.map(function(x,i){return '<span><i style="background:'+col(i)+'"></i>'+x+'</span>'}).join("")+'</div>';
   rows.forEach(function(r){
     h+='<div class="trow'+(r.sum?' sum':'')+'"><div class="tl"><span>'+esc(r.l)+'</span><b>'+fa(r.n)+'</b></div><div class="stk" style="width:'+Math.max(3,Math.round(100*r.n/mx))+'%">'+r.d.map(function(v,i){return v?'<i title="'+nm[i]+': '+v+'" style="flex:'+v+';background:'+col(i)+'"></i>':''}).join("")+'</div><div class="tdt">'+r.d.map(function(v,i){return v?nm[i]+': '+fa(v):''}).filter(Boolean).join(" · ")+'</div></div>';
   });
   return h+'</div>';
 }
+function secHead(ic,t,sub){return '<div class="sh"><span class="shi">'+ic+'</span><div><h2>'+esc(t)+'</h2>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div></div>'}
+function kpi(ic,v,l){return '<div class="kpi"><em>'+ic+'</em><b>'+v+'</b><span>'+l+'</span></div>'}
+function streak(){var D=S.prog.days||{},d=today(),n=0;if(!(D[d]&&D[d].n>0))d=addDays(d,-1);while(D[d]&&D[d].n>0){n++;d=addDays(d,-1)}return n}
 function renderPractice(){
   var h="";
   if(S.phase==="boot"||S.phase==="loading"){app.innerHTML='<div class="panel"><p class="muted">در حال خواندن کارت‌ها از شیت…</p></div>';return}
@@ -698,38 +705,50 @@ function renderPractice(){
   S.loopTok=(S.loopTok||0)+1;S.paused=false;
   var pl=plan(),nd=pl.dn,nn=pl.nn;
   var finished=s&&s.date===t&&s.ids&&s.ids.length&&S.idx>=s.ids.length;
-  h+='<div class="panel"><h2>'+(finished?'تمرین امروز تمام شد':'تمرین امروز')+'</h2>';
-  h+='<div class="stats" style="grid-template-columns:repeat(2,1fr);margin-bottom:10px"><div class="stat"><b>'+fa(practiceDays())+'</b><span class="muted">روز تمرین</span></div><div class="stat"><b>'+fa(S.cards.length)+'</b><span class="muted">کل کلمات بانک</span></div></div>';
-  var dy=S.prog.day,dr=(dy&&dy.date===t)?dy.rounds:0,R=S.cfg.rounds||1;
+  var dy=S.prog.day,dr=(dy&&dy.date===t)?dy.rounds:0,R=S.cfg.rounds||1,td=(S.prog.days||{})[t];
+  var PP=S.prog.p,mast=0;S.cards.forEach(function(c){var x=PP[c.id];if(x&&x[0]>=4)mast++});
+  var mp=S.cards.length?Math.round(100*mast/S.cards.length):0;
+  /* 1 dashboard */
+  h+='<div class="panel dash">'+secHead("📊","داشبورد","نمای کلی پیشرفت تو")+'<div class="kpis">'
+    +kpi("📅",fa(practiceDays()),"روز تمرین")+kpi("🔥",fa(streak()),"روز پیاپی")+kpi("⏱",fmtDurS(daySec()),"زمان امروز")
+    +kpi("📚",fa(S.cards.length),"کل کلمات بانک")+kpi("🏆",fa(mast),"یادگرفته (جعبه ۴ و ۵)")+kpi("🕒",fmtDurS(allSec()),"زمان کل")
+    +'</div><div class="mast"><div class="tl"><span>تسلط کلی</span><b>'+fa(mp)+'٪</b></div><div class="prog" style="margin:4px 0 0"><i style="width:'+mp+'%;background:var(--acc)"></i></div></div></div>';
+  /* 2 today */
+  var total=nd+nn,resume=s&&s.date===t&&S.idx>0&&S.idx<(s.ids||[]).length;
+  h+='<div class="panel">'+secHead("🎯",finished?"تمرین امروز تمام شد":"تمرین امروز",finished?"آفرین، کارت‌های این دسته تمام شد":"مرورهای سررسید و کارت‌های جدید");
+  var goal=S.cfg.perDay||10,done=td&&td.n||0;
+  h+='<div class="tl"><span>هدف روزانه</span><b>'+fa(Math.min(done,goal))+' از '+fa(goal)+'</b></div><div class="prog" style="margin:4px 0 12px"><i style="width:'+Math.min(100,Math.round(100*done/goal))+'%"></i></div>';
+  if(td&&td.n){
+    h+='<div class="stats" style="grid-template-columns:repeat(3,1fr);margin:0 0 10px"><div class="stat"><b>'+fa(td.n)+'</b><span class="muted">مرور امروز</span></div><div class="stat k"><b>'+fa(td.k)+'</b><span class="muted">بلد</span></div><div class="stat h"><b>'+fa(td.h)+'</b><span class="muted">سخت</span></div></div>';
+  }
   if(finished){
-    h+=timeLine();
     h+=s.early?'<p class="muted">مرور جعبه‌ها تمام شد · '+fa(s.ids.length)+' کارت.</p>':'<p class="muted">دوره '+fa(dr)+' از '+fa(R)+' تمام شد · '+fa(s.ids.length)+' کارت.'+(s.rep?'':' فردا کارت‌های سخت اول می‌آیند.')+'</p>';
-    if(dr<R)h+='<p><button class="btn go" id="again" style="width:100%">دوره '+fa(dr+1)+': مرور مجدد کارت‌های امروز</button></p><p class="muted">اول کارت‌هایی که سخت بودند می‌آیند. هر مرور جعبه را به‌روز می‌کند، ولی هر کارت در یک روز فقط یک جعبه بالا می‌رود.</p>';
+    if(dr<R)h+='<p><button class="btn go hero" id="again">دوره '+fa(dr+1)+': مرور مجدد کارت‌های امروز</button></p><p class="muted">اول کارت‌هایی که سخت بودند می‌آیند. هر کارت در یک روز فقط یک جعبه بالا می‌رود.</p>';
     if(nd+nn>0)h+='<p><button class="btn" id="nextb" style="width:100%">دسته‌ی بعدی: '+fa(nd)+' مرور و '+fa(nn)+' کارت جدید</button></p>';
     if(dr>=R)h+='<p class="muted">همه‌ی دوره‌های امروز انجام شد. برای دوره‌ی بیشتر، «تعداد دوره در روز» را در تنظیمات زیاد کن.</p>';
+  }else{
+    h+='<div class="stats" style="margin:0 0 12px"><div class="stat"><b>'+fa(nd)+'</b><span class="muted">مرور سررسید</span></div><div class="stat"><b>'+fa(nn)+'</b><span class="muted">کارت جدید</span></div></div>';
+    h+=(total||resume)?'<button class="btn go hero" id="start">'+(resume?'ادامه تمرین':'شروع تمرین')+'</button>':'<p class="muted">امروز کارتی برای مرور نیست.</p>';
   }
-  var td=(S.prog.days||{})[t];
-  if(td&&td.n){
-    h+='<div class="stats" style="grid-template-columns:repeat(3,1fr)"><div class="stat"><b>'+fa(td.n)+'</b><span class="muted">مرور شده امروز</span></div><div class="stat"><b>'+fa(td.k)+'</b><span class="muted">بلد</span></div><div class="stat"><b>'+fa(td.h)+'</b><span class="muted">سخت</span></div></div>';
-    h+='<p class="muted" style="margin:8px 0 0">دوره‌های انجام‌شده امروز: '+fa(dr)+' از '+fa(R)+'</p>';
-  }
-  if(!finished)h+=(td&&td.n?'<div class="lab" style="margin-top:14px">دسته‌ی بعدی</div>':'')+'<div class="stats"><div class="stat"><b>'+fa(nd)+'</b><span class="muted">مرور سررسید</span></div><div class="stat"><b>'+fa(nn)+'</b><span class="muted">کارت جدید</span></div></div>';
   var el=earlyList().length;
-  if(el)h+='<p style="margin-top:14px"><button class="btn" id="early" style="width:100%">مرور جعبه‌ها همین حالا · '+fa(el)+' کارت</button></p><p class="muted">کارت‌هایی که قبلاً یاد گرفته‌ای ولی هنوز موعدشان نرسیده؛ جعبه‌های پایین‌تر اول. «بلد بودم» کارت را یک جعبه بالا می‌برد (حداکثر یک بار در روز) و «سخت بود» به جعبه‌ی ۱ برمی‌گرداند.</p>';
+  if(el)h+='<p style="margin:12px 0 0"><button class="btn" id="early" style="width:100%">مرور جعبه‌ها همین حالا · '+fa(el)+' کارت</button></p><p class="muted" style="font-size:12px;margin-top:6px">کارت‌هایی که قبلاً یاد گرفته‌ای ولی هنوز موعدشان نرسیده؛ جعبه‌های پایین‌تر اول.</p>';
+  if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
+  h+='</div>';
+  /* 3 content selection */
+  h+='<div class="panel">'+secHead("🗂️","انتخاب محتوا","سرفصل، فیلتر و حالت تمرین");
   var tabs=[];S.cfg.sources.forEach(function(sr){(sr.tabs||[]).forEach(function(tb){if(tb.on)tabs.push(tb)})});
   if(tabs.length>1){
     var f=S.prog.filter||[];
-    h+='<div class="lab">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه</button>'+tabs.map(function(tb){var cn=S.cards.filter(function(c){return c.tid===tb.tid}).length;return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+' ('+fa(cn)+')</button>'}).join("")+'</div>';
+    h+='<div class="sub" style="margin-top:0">سرفصل‌ها</div><div class="fils"><button class="fil" data-f="*" aria-pressed="'+(!f.length)+'">همه ('+fa(S.cards.length)+')</button>'+tabs.map(function(tb){var cn=S.cards.filter(function(c){return c.tid===tb.tid}).length;return '<button class="fil" data-f="'+tb.tid+'" aria-pressed="'+(f.indexOf(tb.tid)>=0)+'">'+esc(tb.label||tb.title)+' ('+fa(cn)+')</button>'}).join("")+'</div>';
   }
   var ffs=S.prog.ff||{},FF=facets(tabCards());
-  if(FF.length)h+='<details class="adv"'+(Object.keys(ffs).some(function(k){return ffs[k]})?' open':'')+'><summary>فیلتر پیشرفته (فصل، سکشن، نوع و…)</summary><div class="facets">'+facetHtml(FF,ffs,"pf")+'</div><p class="muted" style="margin:6px 0 0">'+fa(active().length)+' کلمه با این فیلترها</p></details>';
-  var total=nd+nn,resume=s&&s.date===t&&S.idx>0&&S.idx<(s.ids||[]).length;
-  h+='<p style="margin:12px 0 0"><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">حالت برعکس (فارسی ← انگلیسی): '+(S.cfg.reverse?"روشن":"خاموش")+'</button></p>';
-  if(!finished)h+=(total||resume)?'<button class="btn go" id="start" style="width:100%">'+(resume?'ادامه تمرین':'شروع تمرین')+'</button>':'<p class="muted">امروز کارتی برای مرور نیست.</p>';
-  if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
+  if(FF.length)h+='<details class="adv"'+(Object.keys(ffs).some(function(k){return ffs[k]})?' open':'')+'><summary>🔎 فیلتر پیشرفته (فصل، سکشن، نوع و…)</summary><div class="facets">'+facetHtml(FF,ffs,"pf")+'</div></details>';
+  h+='<div class="mode"><span>حالت برعکس (فارسی ← انگلیسی)</span><button class="btn sm" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">'+(S.cfg.reverse?"روشن":"خاموش")+'</button></div>';
+  h+='<p class="muted" style="margin-top:10px">'+fa(active().length)+' کلمه برای تمرین فعال است.</p></div>';
+  /* 4 boxes */
   var bc=boxCounts(),mx=Math.max.apply(null,bc.concat([1])),days=[1,2,4,7,14];
+  h+='<div class="panel">'+secHead("📦","جعبه‌های لایتنر","روی هر جعبه بزن تا کلماتش را ببینی");
   h+='<div class="boxes" aria-label="Leitner boxes">'+bc.map(function(v,i){return '<button class="bx" data-bx="'+(i+1)+'" aria-pressed="'+(S.boxOpen===i+1)+'"><b>'+fa(v)+'</b><i style="height:'+Math.max(4,Math.round(48*v/mx))+'px;background:var(--bar'+(i+1)+')"></i>جعبه '+fa(i+1)+'<br>'+fa(days[i])+' روز</button>'}).join("")+'</div>';
-  h+='<p class="muted" style="margin:4px 0 0;text-align:center;font-size:12px">روی هر جعبه بزن تا کلماتش را ببینی.</p>';
   if(S.boxOpen)h+=boxPanel(S.boxOpen);
   h+=totalChart();
   h+='</div>';
