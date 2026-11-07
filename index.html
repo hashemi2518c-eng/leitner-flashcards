@@ -120,7 +120,13 @@ svg.ic{width:18px;height:18px;flex:none}
 .le time{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums;flex:none}
 .le .ok{color:var(--acc-ink)}.le .no{color:var(--hard-ink)}
 .rh{font-size:13px;color:var(--ink2);margin:12px 0 2px}
-.bar{flex-wrap:wrap}.nav{flex:1 1 100%;order:3}.nav .chip{flex:1;padding:0 6px}.ar{display:flex;gap:8px;margin-top:12px}.ar .btn{flex:1}.sp[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}.aen{font-family:var(--font-en);font-size:26px;line-height:1.35;font-weight:500;text-align:center;direction:ltr}.afa{font-size:22px;text-align:center;color:var(--acc-ink);margin-top:10px}.aex{font-size:13px;color:var(--ink2);text-align:center;margin-top:10px;direction:ltr}
+.bar{flex-wrap:wrap}.nav{flex:1 1 100%;order:3}.nav .chip{flex:1;padding:0 4px;font-size:12px}.ar{display:flex;gap:8px;margin-top:12px}.ar .btn{flex:1}.sp[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}.aen{font-family:var(--font-en);font-size:26px;line-height:1.35;font-weight:500;text-align:center;direction:ltr}.afa{font-size:22px;text-align:center;color:var(--acc-ink);margin-top:10px}.aex{font-size:13px;color:var(--ink2);text-align:center;margin-top:10px;direction:ltr}
+.mk{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;min-width:24px;margin-inline-start:8px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:13px;line-height:1;cursor:pointer;vertical-align:middle;opacity:.75;font-family:system-ui,sans-serif}
+.mk:hover{opacity:1}.mk[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:#fff;opacity:1}
+.mmr{display:flex;gap:8px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.mmr:first-child{border-top:0}.mmr .mt{flex:1;min-width:0}.mmr .en{font-family:var(--font-en);font-size:15px;direction:ltr;text-align:left}.mmr .fa{color:var(--ink2);font-size:13px;margin-top:2px}
+.mmr .ib{min-width:36px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--ink2);font-size:14px}
+.dots{display:inline-flex;gap:3px;margin-inline-start:6px;vertical-align:middle}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--acc)}.dots.ms i{background:var(--orange)}
+.mmbig{font-family:var(--font-en);font-size:24px;text-align:center;direction:ltr;line-height:1.5}
 </style>
 </head>
 <body>
@@ -132,6 +138,7 @@ svg.ic{width:18px;height:18px;flex:none}
     <nav class="nav">
       <button class="chip" id="nav-p" aria-pressed="true">تمرین</button>
       <button class="chip" id="nav-b" aria-pressed="false">بانک لغات</button>
+      <button class="chip" id="nav-m" aria-pressed="false">حفظ فوری</button>
       <button class="chip" id="nav-a" aria-pressed="false">مرور خودکار</button>
       <button class="chip" id="nav-h" aria-pressed="false">تاریخچه</button>
       <button class="chip" id="nav-s" aria-pressed="false">تنظیمات</button>
@@ -144,7 +151,7 @@ svg.ic{width:18px;height:18px;flex:none}
 <script>
 (function(){
 var SERVER="Google Sheets",INT={1:1,2:2,3:4,4:7,5:14};
-var S={view:"practice",cfg:{perDay:10,maxNew:0,rounds:1,autoDays:3,reverse:false,speedLv:2,sheetSync:true,autoSpeak:true,sources:[]},prog:{p:{},session:null,filter:[],day:null,days:{}},logs:{},hist:null,col:null,sq:{},dirty:{},logBuf:{},tabsOk:{},syncT:null,syncErr:false,cards:[],phase:"boot",idx:0,show:false,mcp:null,uid:null,docs:{},q:{},draft:null,loadErr:null,timer:null};
+var S={view:"practice",cfg:{perDay:10,maxNew:0,rounds:1,autoDays:3,reverse:false,speedLv:2,sheetSync:true,autoSpeak:true,mmDaily:15,mmInt:"1,2,4,7,30",sources:[]},prog:{p:{},session:null,filter:[],day:null,days:{},mm:{items:[]}},logs:{},hist:null,col:null,sq:{},dirty:{},logBuf:{},tabsOk:{},syncT:null,syncErr:false,cards:[],phase:"boot",idx:0,show:false,mcp:null,uid:null,docs:{},q:{},draft:null,loadErr:null,timer:null};
 var app=document.getElementById("app"),msg=document.getElementById("msg");
 var ICON='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -479,6 +486,7 @@ function toggleLoop(){S.loopOn=!S.loopOn;if(S.loopOn)loopStart();else loopStop()
 document.addEventListener("keydown",function(e){
   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat)return;
   var tg=e.target&&e.target.tagName;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT")return;
+  if(S.view==="mm"&&S.mmq&&S.mmq.on&&S.mmq.q[S.mmq.i]){var k0=e.key,m0={"۱":"1","۲":"2"};if(m0[k0])k0=m0[k0];if(k0==="1"||k0==="2"){e.preventDefault();if(!S.mmq.show)mmReveal();else mmGrade(k0==="1")}return}
   if(S.view!=="practice"||S.phase!=="card"||!cur())return;
   var k=e.key,m={"۰":"0","۱":"1","۲":"2"};if(m[k])k=m[k];
   if(k==="p"||k==="P"){e.preventDefault();togglePause();return}
@@ -506,37 +514,136 @@ function render(){
   document.getElementById("nav-h").setAttribute("aria-pressed",S.view==="hist");
   document.getElementById("nav-a").setAttribute("aria-pressed",S.view==="auto");
   document.getElementById("nav-b").setAttribute("aria-pressed",S.view==="bank");
+  document.getElementById("nav-m").setAttribute("aria-pressed",S.view==="mm");
   document.getElementById("sub").textContent=new Date().toLocaleDateString("fa-IR",{weekday:"long",day:"numeric",month:"long"});
   if(S.view==="setup")return renderSetup();
   if(S.view==="hist")return renderHist();
   if(S.view==="auto")return renderAuto();
   if(S.view==="bank")return renderBank();
+  if(S.view==="mm")return renderMM();
   renderPractice();
+}
+/* ===== حفظ فوری (Must Memorize) ===== */
+function mmDig(t){return String(t).replace(/[۰-۹]/g,function(d){return "۰۱۲۳۴۵۶۷۸۹".indexOf(d)}).replace(/[٠-٩]/g,function(d){return "٠١٢٣٤٥٦٧٨٩".indexOf(d)})}
+function mmInts(){var a=mmDig(S.cfg.mmInt||"").split(/[,،\s]+/).map(Number).filter(function(n){return n>0&&n<400});return a.length?a:[1,2,4,7,30]}
+function mmItems(){return S.prog.mm.items}
+function mmFind(k){var a=mmItems();for(var i=0;i<a.length;i++)if(a[i].key===k)return a[i];return null}
+function mmInfo(c,part){
+  var qa=qaSplit(c),L=exLabels(c.ref),en="",fa_="",lab=c.label||"";
+  if(part==="t"){en=qa.qa?qa.q:enText(c);fa_=c.struct?"":faOf(c);if(fa_===en)fa_=""}
+  else if(part==="s"){en=c.struct||""}
+  else if(part==="a"){en=qa.a||""}
+  else if(part.charAt(0)==="x"){
+    var i=+part.slice(1),a=exItems(c.ex),b=exItems(c.exfa),it=a[i]||a[0]||{t:c.ex||"",n:""};
+    en=it.t;fa_=(b[i]&&b[i].t)||(a.length<2?c.exfa||"":"");if(it.n&&L[it.n])lab=L[it.n]+" · "+(c.label||"");
+  }
+  return {en:String(en||"").trim(),fa:String(fa_||"").trim(),lab:lab,hd:qa.q||enText(c)}
+}
+function mkBtn(c,part){var on=!!mmFind(c.id+"|"+part);return '<button class="mk" type="button" data-mk="'+esc(part)+'" data-mc="'+esc(c.id)+'" aria-pressed="'+on+'" title="'+(on?"در «حفظ فوری» هست؛ برای برداشتن بزن":"افزودن به «حفظ فوری»")+'" aria-label="حفظ فوری">✓</button>'}
+function mmToggle(cid,part){
+  var k=cid+"|"+part,it=mmFind(k),c=byId(cid);if(!c)return;
+  if(it){S.prog.mm.items=mmItems().filter(function(x){return x!==it});note("از «حفظ فوری» برداشته شد.",true)}
+  else{var f=mmInfo(c,part);if(!f.en)return;mmItems().push({key:k,cid:cid,part:part,en:f.en,fa:f.fa,lab:f.lab,hd:f.hd,added:today(),step:0,due:today(),lapses:0,seen:0});note("به «حفظ فوری» اضافه شد.",true)}
+  saveDoc("progress",S.prog);mmSync();
+  [].forEach.call(document.querySelectorAll('.mk[data-mc="'+cid+'"][data-mk="'+part+'"]'),function(b){b.setAttribute("aria-pressed",!it)});
+}
+document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".mk");if(!b)return;e.preventDefault();mmToggle(b.dataset.mc,b.dataset.mk)});
+function mmCell(t){t=String(t==null?"":t);return /^[=+\-@]/.test(t)?" "+t:t}
+function mmSync(){
+  clearTimeout(S.mmT);
+  S.mmT=setTimeout(function(){
+    var src=S.cfg.sources[0];if(!src||!src.id||S.cfg.sheetSync===false)return;
+    var N=mmInts().length,rows=[["#","English","فارسی","بخش / مرجع","کارت مبدأ","تاریخ افزودن","مرحله","سررسید","وضعیت"]];
+    mmItems().forEach(function(it,i){var c=byId(it.cid);rows.push([i+1,mmCell(it.en),mmCell(it.fa),mmCell(it.lab),mmCell(it.hd||(c&&c.id)||""),it.added,it.step+"/"+N,it.due,it.step>=N?"حفظ‌شده":(it.step?"در حال یادگیری":"جدید")])});
+    var m=S.prog.mm,prev=m.n||0;while(rows.length<prev+1)rows.push(["","","","","","","","",""]);m.n=mmItems().length;
+    api("update",{id:src.id,tab:"Must Memorize",values:rows}).catch(function(){note("همگام‌سازی تب «Must Memorize» انجام نشد؛ بعداً دوباره تلاش می‌شود.")});
+  },1500);
+}
+function mmDue(){var t=today();return mmItems().filter(function(x){return x.due<=t})}
+function mmStats(){var N=mmInts().length,a=mmItems();return {tot:a.length,due:mmDue().length,ms:a.filter(function(x){return x.step>=N}).length}}
+function mmQueue(){
+  var m=S.prog.mm,t=today();if(!m.day||m.day.d!==t)m.day={d:t,ids:[]};
+  var left=Math.max(0,S.cfg.mmDaily-m.day.ids.length);
+  var due=mmDue().sort(function(a,b){return (a.due<b.due?-1:a.due>b.due?1:0)||a.step-b.step});
+  var q=[],n=0;due.forEach(function(x){if(m.day.ids.indexOf(x.key)>=0){q.push(x.key)}else if(n<left){q.push(x.key);n++}});
+  return q;
+}
+function dotsH(it){var N=mmInts().length,h='<span class="dots'+(it.step>=N?' ms':'')+'" aria-label="مرحله '+it.step+'">';for(var i=0;i<N;i++)h+='<i'+(i<it.step?' class="on"':'')+'></i>';return h+'</span>'}
+function mmRowH(it){return '<div class="mmr"><div class="mt"><div class="en" dir="ltr">'+esc(it.en)+'</div>'+(it.fa?'<div class="fa" dir="rtl">'+esc(it.fa)+'</div>':'')+'<div class="muted" style="font-size:12px;margin-top:4px"><bdi dir="ltr">'+esc(it.lab)+'</bdi>'+dotsH(it)+' · سررسید '+esc(it.due)+'</div></div><button class="ib" data-mo="'+esc(it.key)+'" title="باز کردن کارت مبدأ">↗</button><button class="ib" data-mr="'+esc(it.key)+'" title="حذف">✕</button></div>'}
+function renderMM(){
+  if(S.mmq&&S.mmq.on)return renderMMDrill();
+  var st=mmStats(),h='';
+  h+='<div class="panel">'+secHead("🧠","حفظ فوری","جمله‌ها و مثال‌هایی که باید بی‌درنگ و بدون فکر بگویی");
+  h+='<div class="stats" style="grid-template-columns:repeat(3,1fr)"><div class="stat"><b>'+fa(st.tot)+'</b><span class="muted">کل</span></div><div class="stat"><b>'+fa(st.due)+'</b><span class="muted">سررسید</span></div><div class="stat"><b>'+fa(st.ms)+'</b><span class="muted">حفظ‌شده</span></div></div>';
+  var q=mmQueue();
+  h+=q.length?'<button class="btn go hero" id="mmstart" style="width:100%">شروع تمرین · '+fa(q.length)+' مورد</button>':'<p class="muted">'+(st.tot?'امروز موردی برای مرور نیست.':'هنوز چیزی اضافه نکرده‌ای. روی هر کارت، کنار جمله، ساختار یا مثال، دکمه‌ی ✓ کوچک را بزن.')+'</p>';
+  h+='<p class="muted" style="font-size:12px;margin-top:8px">کلید ۱ = روان گفتم، کلید ۲ = لکنت داشتم یا یادم نبود. فاصله‌ها: '+esc(mmInts().join("، "))+' روز · سقف روزانه: '+fa(S.cfg.mmDaily)+'</p></div>';
+  if(st.tot){h+='<div class="panel"><input type="search" id="mmf" placeholder="جست‌وجو در موارد" style="width:100%;margin-bottom:6px"><div id="mml"></div></div>'}
+  app.innerHTML=h;
+  var lst=function(){var f=(document.getElementById("mmf")||{}).value||"";f=f.toLowerCase().trim();var a=mmItems().filter(function(x){return !f||(x.en+" "+x.fa+" "+x.lab).toLowerCase().indexOf(f)>=0});document.getElementById("mml").innerHTML=a.length?a.map(mmRowH).join(""):'<p class="muted">موردی پیدا نشد.</p>'};
+  if(st.tot){lst();document.getElementById("mmf").oninput=lst;
+    document.getElementById("mml").onclick=function(e){var o=e.target.closest("[data-mo]"),r=e.target.closest("[data-mr]");
+      if(o){S.bankId=o.dataset.mo.split("|")[0];S.bankShow=true;S.bankFrom="mm";go("bank");window.scrollTo(0,0)}
+      else if(r){var k=r.dataset.mr;S.prog.mm.items=mmItems().filter(function(x){return x.key!==k});saveDoc("progress",S.prog);mmSync();renderMM()}}}
+  var b=document.getElementById("mmstart");if(b)b.onclick=function(){S.mmq={on:true,q:mmQueue(),i:0,show:false,again:{},fl:0,total:0};S.mmq.total=S.mmq.q.length;renderMM()};
+}
+function renderMMDrill(){
+  var m=S.mmq,k=m.q[m.i],it=k&&mmFind(k),h='';
+  if(!it){var fl=m.fl;S.mmq=null;h='<div class="panel" style="text-align:center"><h2>تمام شد 🎉</h2><p class="muted">'+fa(fl)+' مورد را روان گفتی.</p><p style="margin-top:12px"><button class="btn go" id="mmback">بازگشت</button></p></div>';app.innerHTML=h;document.getElementById("mmback").onclick=function(){renderMM()};return}
+  h+='<div class="tb"><button class="btn sm tbb" id="mmx">← LIST</button><button class="btn sm tbb" id="mmo">↗ CARD</button></div>';
+  h+='<div class="prog"><i style="width:'+Math.round(100*m.i/m.q.length)+'%"></i></div>';
+  h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(it.lab)+'</span><span class="tag box">'+fa(m.i+1)+' از '+fa(m.q.length)+'</span></div><div class="cb">';
+  var pr=it.fa||it.hd;
+  h+='<div><div class="lab">'+(it.fa?'بگو (انگلیسی)':'از کارت')+'</div><div class="q" dir="auto" style="text-align:center">'+esc(pr)+'</div></div>';
+  if(m.show)h+='<div><div class="lab">English</div><div class="blk ans en mmbig" dir="ltr">'+esc(it.en)+'</div></div><div><button class="btn sm" id="mmsp">'+ICON+'<span>شنیدن</span></button></div>';
+  h+='</div></div>';
+  h+=m.show?'<div class="ar"><button class="btn known" id="mmk">روان بود <span class="kb">1</span></button><button class="btn hard" id="mmh">لکنت / سخت <span class="kb">2</span></button></div>':'<button class="btn go" id="mmrev" style="width:100%">نمایش پاسخ <span class="kb">1 · 2</span></button>';
+  app.innerHTML=h;
+  document.getElementById("mmx").onclick=function(){S.mmq=null;renderMM()};
+  document.getElementById("mmo").onclick=function(){S.mmq=null;S.bankId=it.cid;S.bankShow=true;S.bankFrom="mm";go("bank")};
+  var sp=document.getElementById("mmsp");if(sp)sp.onclick=function(){speak(it.en,true)};
+  var rv=document.getElementById("mmrev");if(rv)rv.onclick=mmReveal;
+  var kk=document.getElementById("mmk");if(kk)kk.onclick=function(){mmGrade(true)};
+  var hh=document.getElementById("mmh");if(hh)hh.onclick=function(){mmGrade(false)};
+}
+function mmReveal(){var m=S.mmq;if(!m)return;m.show=true;renderMMDrill();var it=mmFind(m.q[m.i]);if(it&&S.cfg.autoSpeak)speak(it.en)}
+function mmGrade(ok){
+  var m=S.mmq;if(!m||!m.show)return;
+  var k=m.q[m.i],it=mmFind(k),N=mmInts(),t=today(),dy=S.prog.mm.day;
+  if(it){
+    if(dy&&dy.ids.indexOf(k)<0)dy.ids.push(k);
+    it.seen=(it.seen||0)+1;
+    if(ok){
+      if(m.again[k]){it.step=0;it.due=addDays(t,N[0])}
+      else{it.step=Math.min(N.length,it.step+1);it.due=addDays(t,it.step>=N.length?30:N[it.step-1]);m.fl++}
+    }else{it.step=0;it.lapses=(it.lapses||0)+1;it.due=addDays(t,N[0]);m.again[k]=1;m.q.push(k)}
+  }
+  m.i++;m.show=false;saveDoc("progress",S.prog);mmSync();renderMMDrill();
 }
 function exItems(t){return String(t||"").split(/\n(?=\d+\)\s)/).map(function(x){var m=/^(\d+)\)\s*([\s\S]*)$/.exec(x.trim());return m?{n:m[1],t:m[2].trim()}:{n:"",t:x.trim()}})}
 function exLabels(ref){var o={};String(ref||"").split(/\n(?=\d+\)\s)/).forEach(function(x){var m=/^(\d+)\)/.exec(x.trim());if(!m)return;var sx=/سکشن\s*(\d+)/.exec(x),rx=/قانون\s*(\d+-[\w.()\-]+)/.exec(x),px=/صفحه\s*(\d+)/.exec(x),w=[];if(sx)w.push("S"+sx[1]);if(rx)w.push("R"+rx[1]);if(px)w.push("P"+px[1]);if(w.length)o[m[1]]=w.join(" - ")});return o}
 function exHtml(c){
   var L=exLabels(c.ref);
-  if(!Object.keys(L).length)return '<div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'');
-  function row(it,rtl){if(!it.t)return "";var lb=L[it.n];return '<div class="exi" dir="'+(rtl?'rtl':'ltr')+'">'+(lb?'<bdi dir="ltr" class="exl">'+esc(lb)+'</bdi> '+esc(it.t):esc((it.n?it.n+") ":"")+it.t))+'</div>'}
-  var h='<div class="ltr" style="font-size:15px">'+exItems(c.ex).map(function(it){return row(it,false)}).join("")+'</div>';
-  if(c.exfa)h+='<div style="margin-top:8px;color:var(--ink2)">'+exItems(c.exfa).map(function(it){return row(it,true)}).join("")+'</div>';
+  if(!Object.keys(L).length)return '<div class="ltr" dir="ltr" style="font-size:15px">'+esc(c.ex)+mkBtn(c,"x0")+'</div>'+(c.exfa?'<div dir="rtl" style="margin-top:6px;color:var(--ink2)">'+esc(c.exfa)+'</div>':'');
+  function row(it,rtl,mk,ix){if(!it.t)return "";var lb=L[it.n];return '<div class="exi" dir="'+(rtl?'rtl':'ltr')+'">'+(lb?'<bdi dir="ltr" class="exl">'+esc(lb)+'</bdi> '+esc(it.t):esc((it.n?it.n+") ":"")+it.t))+(mk?mkBtn(c,"x"+ix):"")+'</div>'}
+  var h='<div class="ltr" style="font-size:15px">'+exItems(c.ex).map(function(it,ix){return row(it,false,true,ix)}).join("")+'</div>';
+  if(c.exfa)h+='<div style="margin-top:8px;color:var(--ink2)">'+exItems(c.exfa).map(function(it){return row(it,true,false)}).join("")+'</div>';
   return h;
 }
 function cardPanel(c,show,tags,mode){
   var h='',ex=!!c.struct,rv=isRev(c),qa=qaSplit(c);
   h+='<div class="panel card'+(mode==="p"&&S.paused?' paused':'')+'"><div class="ch"><span class="tag">'+esc(c.label)+'</span>'+(c.cat?'<span class="tag cat">'+esc(c.cat)+'</span>':'')+tags+'</div>';
   h+='<div class="cb'+(ex?' ex':'')+'">';
-  h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?faOf(c):enOf(c))+'</div></div>';
+  h+='<div><div class="lab">'+(rv?'معنی انگلیسی این چیست؟':(ex?'Question':'Say it in English'))+'</div><div class="q" dir="auto">'+esc(rv?faOf(c):enOf(c))+mkBtn(c,"t")+'</div></div>';
   if(qa.qa)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن سؤال (انگلیسی)</span></button></div>';
   else if(!rv)h+='<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>';
   if(c.kw)h+='<div><div class="lab">Keywords · کلیدواژه‌ها</div><div>'+kwHtml(c.kw)+'</div><div style="margin-top:8px"><button class="btn sm" id="spkw">'+ICON+'<span>شنیدن کلیدواژه‌ها (انگلیسی)</span></button></div></div>';
-  if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+'</div></div>';
+  if(ex)h+='<div><div class="lab">Structure · ساختار</div><div class="blk" dir="auto">'+esc(c.struct)+mkBtn(c,"s")+'</div></div>';
   if(show){
     if(rv)h+='<div><div class="lab">'+(hasFa(enOf(c))?'Persian · فارسی':'English')+'</div><div class="blk ans en" dir="auto" style="font-size:22px;text-align:center">'+esc(enOf(c))+'</div></div>'+(qa.qa?'':'<div><button class="btn sm" id="spk">'+ICON+'<span>شنیدن تلفظ</span></button></div>');
     else if(ex)h+='<div><div class="lab">Answer · جواب</div><div class="blk ans en" dir="auto">'+esc(faOf(c))+'</div></div>';
     else h+='<div class="back" dir="auto">'+esc(faOf(c))+'</div>';
-    if(qa.qa&&qa.a)h+='<div><button class="btn sm" id="spa">'+ICON+'<span>شنیدن جواب (انگلیسی)</span></button></div>';
+    if(qa.qa&&qa.a)h+='<div><button class="btn sm" id="spa">'+ICON+'<span>شنیدن جواب (انگلیسی)</span></button>'+mkBtn(c,"a")+'</div>';
     if(c.ex)h+='<div><div class="lab">Example · مثال</div><div class="blk" style="text-align:start">'+exHtml(c)+'</div><div style="margin-top:8px"><button class="btn sm" id="spx">'+ICON+'<span>شنیدن مثال (انگلیسی)</span></button></div></div>';
   }
   h+='</div></div>';
@@ -639,13 +746,13 @@ function renderBankCard(){
   var c=byId(S.bankId);if(!c){S.bankId=null;return renderBank()}
   var x=S.prog.p[c.id],show=S.bankShow!==false;
   var tags='<span class="tag box">'+(x?'جعبه '+fa(x[0])+' · سررسید '+esc(x[1]):'جدید')+'</span>';
-  var h='<div class="tb"><button class="btn sm tbb" id="bb">'+(S.bankFrom==="practice"?"← BACK":"← BANK")+'</button><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">EN ⇄ FA</button><button class="btn sm tbb" id="cl">TO CLAUDE</button></div>';
+  var h='<div class="tb"><button class="btn sm tbb" id="bb">'+(S.bankFrom==="practice"||S.bankFrom==="mm"?"← BACK":"← BANK")+'</button><button class="btn sm tbb" id="rvt" aria-pressed="'+!!S.cfg.reverse+'">EN ⇄ FA</button><button class="btn sm tbb" id="cl">TO CLAUDE</button></div>';
   h+=cardPanel(c,show,tags,"b");
   h+='<button class="btn go" id="bsh" style="width:100%">'+(show?"مخفی کردن پاسخ":"نمایش پاسخ")+'</button>';
   var fk=Object.keys(c.f||{});
   if(fk.length)h+='<p style="margin:12px 0 0">'+fk.map(function(k){return '<span class="tag cat">'+esc(k)+': '+esc(c.f[k])+'</span> '}).join("")+'</p>';
   app.innerHTML=h;bindCard(c);
-  document.getElementById("bb").onclick=function(){if(S.bankFrom==="practice"){S.bankFrom=null;S.bankId=null;go("practice")}else{S.bankId=null;renderBank()}};
+  document.getElementById("bb").onclick=function(){if(S.bankFrom==="mm"){S.bankFrom=null;S.bankId=null;go("mm")}else if(S.bankFrom==="practice"){S.bankFrom=null;S.bankId=null;go("practice")}else{S.bankId=null;renderBank()}};
   document.getElementById("bsh").onclick=function(){S.bankShow=!show;renderBankCard()};
   document.getElementById("rvt").onclick=function(){S.cfg.reverse=!S.cfg.reverse;saveCfgSoon();renderBankCard()};
   var cl=document.getElementById("cl");cl.onclick=function(){sendToChat(c,cl)};
@@ -775,6 +882,9 @@ function renderPractice(){
   if(el)h+='<p style="margin:12px 0 0"><button class="btn" id="early" style="width:100%">مرور جعبه‌ها همین حالا · '+fa(el)+' کارت</button></p><p class="muted" style="font-size:12px;margin-top:6px">کارت‌هایی که قبلاً یاد گرفته‌ای ولی هنوز موعدشان نرسیده؛ جعبه‌های پایین‌تر اول.</p>';
   if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
   h+='</div>';
+  var ms=mmStats();
+  h+='<div class="panel">'+secHead("🧠","حفظ فوری","جمله‌ها و مثال‌هایی که باید بی‌درنگ بگویی");
+  h+='<div class="stats" style="grid-template-columns:repeat(3,1fr);margin:0 0 12px"><div class="stat"><b>'+fa(ms.tot)+'</b><span class="muted">کل</span></div><div class="stat"><b>'+fa(ms.due)+'</b><span class="muted">سررسید</span></div><div class="stat"><b>'+fa(ms.ms)+'</b><span class="muted">حفظ‌شده</span></div></div><button class="btn" id="mmgo" style="width:100%">'+(ms.tot?'رفتن به حفظ فوری':'حفظ فوری · با ✓ روی کارت‌ها پر می‌شود')+'</button></div>';
   /* 4 boxes */
   var bc=boxCounts(),mx=Math.max.apply(null,bc.concat([1])),days=[1,2,4,7,14];
   h+='<div class="panel">'+secHead("📦","جعبه‌های لایتنر","روی هر جعبه بزن تا کلماتش را ببینی");
@@ -785,6 +895,7 @@ function renderPractice(){
   app.innerHTML=h;
   [].forEach.call(app.querySelectorAll("[data-bx]"),function(el){el.onclick=function(){var n=+el.dataset.bx;S.boxOpen=S.boxOpen===n?0:n;S.bxn=100;renderPractice()}});
   [].forEach.call(app.querySelectorAll("[data-w]"),function(el){el.onclick=function(){S.bankId=el.dataset.w;S.bankShow=true;S.bankFrom="practice";go("bank");window.scrollTo(0,0)}});
+  var mg=document.getElementById("mmgo");if(mg)mg.onclick=function(){go("mm")};
   var bxc=document.getElementById("bxc");if(bxc)bxc.onclick=function(){S.boxOpen=0;renderPractice()};
   var bxm=document.getElementById("bxmore");if(bxm)bxm.onclick=function(){S.bxn=(S.bxn||100)+100;renderPractice()};
   var rt0=document.getElementById("rvt");if(rt0)rt0.onclick=toggleRev;
@@ -810,6 +921,7 @@ function renderSetup(){
   var d=S.draft||(S.draft=JSON.parse(JSON.stringify(S.cfg))),h="";
   h+='<div class="panel"><h2>تعداد روزانه</h2><div class="grid2"><div><label class="f" for="np">تعداد کل کارت در روز</label><input type="number" id="np" min="1" max="200" value="'+S.cfg.perDay+'"></div><div><label class="f" for="rp">سقف کارت جدید در روز (۰ = بقیه‌ی تعداد کل با جدید پر شود)</label><input type="number" id="rp" min="0" max="200" value="'+S.cfg.maxNew+'"></div></div><div style="margin-top:12px"><label class="f" for="rd">تعداد دوره در روز (هر دوره یک بار مرور کامل کارت‌های امروز)</label><input type="number" id="rd" min="1" max="10" value="'+(S.cfg.rounds||1)+'"></div><div style="margin-top:12px"><label class="f" for="ad">مرور خودکار: چند روز اخیر (به‌علاوه‌ی امروز)</label><input type="number" id="ad" min="0" max="30" value="'+(S.cfg.autoDays==null?3:S.cfg.autoDays)+'"></div><p class="muted" style="margin-top:8px">اول کارت‌های مرورِ سررسیدشده می‌آیند و بقیه‌ی تعداد کل با کارت جدید پر می‌شود.</p>';
   h+='<label class="tabhead" style="margin-top:12px"><input type="checkbox" id="as"'+(S.cfg.autoSpeak?" checked":"")+'><span>پخش خودکار تلفظ</span></label><label class="tabhead" style="margin-top:8px"><input type="checkbox" id="ss"'+(S.cfg.sheetSync!==false?" checked":"")+'><span>ذخیره‌ی جعبه‌ها و تاریخچه در خود Google Sheet (تب‌های Leitner_Box و Leitner_Log)</span></label><p class="muted" style="margin-top:8px">تعداد با تغییر همین‌جا اعمال می‌شود و تمرین امروزِ شروع‌نشده دوباره ساخته می‌شود.</p></div>';
+  h+='<div class="panel"><h2>حفظ فوری</h2><div class="grid2"><div><label class="f" for="mmd">سقف مورد در روز</label><input type="number" id="mmd" min="1" max="200" value="'+S.cfg.mmDaily+'"></div><div><label class="f" for="mmi">فاصله‌ی مرورها به روز (با ویرگول)</label><input type="text" class="ltr" id="mmi" value="'+esc(S.cfg.mmInt)+'"></div></div><p class="muted" style="font-size:12px;margin-top:6px">بعد از آخرین فاصله، مورد «حفظ‌شده» می‌شود و ماهی یک بار مرور می‌شود.</p></div>';
   d.sources.forEach(function(s,i){
     h+='<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">'+esc(s.name||("منبع "+fa(i+1)))+'</h2><button class="btn sm" data-rm="'+i+'">حذف</button></div>';
     h+='<label class="f" for="in'+i+'" style="margin-top:8px">لینک یا شناسه‌ی Google Sheet</label><div class="row"><input type="text" class="ltr" id="in'+i+'" data-in="'+i+'" value="'+esc(s.input||"")+'" style="flex:1 1 200px"><button class="btn sm" data-ld="'+i+'">بارگذاری تب‌ها</button></div>';
@@ -841,6 +953,8 @@ function renderSetup(){
     saveCfgSoon();
   }
   document.getElementById("np").oninput=cnt;document.getElementById("rp").oninput=cnt;document.getElementById("rd").oninput=cnt;document.getElementById("ad").oninput=function(){var v=parseInt(this.value,10);S.cfg.autoDays=Math.max(0,Math.min(30,isNaN(v)?3:v));saveCfgSoon()};
+  document.getElementById("mmd").oninput=function(){var v=parseInt(this.value,10);S.cfg.mmDaily=Math.max(1,Math.min(200,isNaN(v)?15:v));saveCfgSoon()};
+  document.getElementById("mmi").oninput=function(){S.cfg.mmInt=this.value;saveCfgSoon()};
   document.getElementById("ss").onchange=function(){S.cfg.sheetSync=this.checked;saveCfgSoon()};
   document.getElementById("as").onchange=function(){S.cfg.autoSpeak=this.checked;saveCfgSoon()};
   var add=document.getElementById("add");
@@ -1160,11 +1274,12 @@ document.getElementById("nav-p").onclick=function(){go("practice")};
 document.getElementById("nav-s").onclick=function(){go("setup")};
 document.getElementById("nav-a").onclick=function(){go("auto")};
 document.getElementById("nav-b").onclick=function(){S.bankId=null;S.bankFrom=null;go("bank")};
+document.getElementById("nav-m").onclick=function(){go("mm")};
 document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
-  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,sources:c.sources||[]};
-  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0,dx:p.dx||0,ff:p.ff||{},d0:p.d0||"",rt:p.rt||0};
+  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,mmDaily:c.mmDaily>0?c.mmDaily:15,mmInt:c.mmInt||"1,2,4,7,30",sources:c.sources||[]};
+  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0,dx:p.dx||0,ff:p.ff||{},d0:p.d0||"",rt:p.rt||0,mm:{items:(p.mm&&p.mm.items)||[],day:(p.mm&&p.mm.day)||null,n:(p.mm&&p.mm.n)||0}};
   if(l)S.logs[today()]=l;
 }
 function startCards(){if(S.cfg.sources.length){loadCards()}else{S.view="setup";S.phase="idle";render()}}
