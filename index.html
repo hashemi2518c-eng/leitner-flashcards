@@ -1278,11 +1278,24 @@ document.getElementById("nav-m").onclick=function(){go("mm")};
 document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
-  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,mmDaily:c.mmDaily>0?c.mmDaily:15,mmInt:c.mmInt||"1,2,4,7,30",sources:c.sources||[]};
+  if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,mmDaily:c.mmDaily>0?c.mmDaily:15,mmInt:c.mmInt||"1,2,4,7,30",freeAdded:c.freeAdded?1:0,sources:c.sources||[]};
   if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0,dx:p.dx||0,ff:p.ff||{},d0:p.d0||"",rt:p.rt||0,mm:{items:(p.mm&&p.mm.items)||[],day:(p.mm&&p.mm.day)||null,n:(p.mm&&p.mm.n)||0}};
   if(l)S.logs[today()]=l;
 }
-function startCards(){if(S.cfg.sources.length){loadCards()}else{S.view="setup";S.phase="idle";render()}}
+/* Free CELPIP: tab for free practices (outside the Behjati course). Added once, with the same columns as «Behjati CELPIP», as its own category. */
+function ensureFree(){
+  if(S.cfg.freeAdded)return;var ch=false;
+  (S.cfg.sources||[]).forEach(function(s){
+    var tabs=s.tabs||[],b=null,f=null;
+    tabs.forEach(function(t){if(t.title==="Behjati CELPIP")b=t;if(t.title==="Free CELPIP")f=t});
+    if(!b||!b.headers||(f&&f.on&&f.headers))return;
+    var n=JSON.parse(JSON.stringify(b));n.tid=f?f.tid:rid();n.title="Free CELPIP";n.label="Free CELPIP";n.on=true;
+    n.headers=b.headers.slice();n.headers[13]="topic_code";
+    if(f)tabs[tabs.indexOf(f)]=n;else tabs.splice(tabs.indexOf(b)+1,0,n);ch=true;
+  });
+  if(ch){S.cfg.freeAdded=1;saveDoc("config",S.cfg)}
+}
+function startCards(){ensureFree();if(S.cfg.sources.length){loadCards()}else{S.view="setup";S.phase="idle";render()}}
 function boot(){
   if(!S.conn)return;
   S.col={doc:mkDoc};S.docs.config=mkDoc("config");S.docs.progress=mkDoc("progress");
