@@ -138,7 +138,7 @@ svg.ic{width:18px;height:18px;flex:none}
     <nav class="nav">
       <button class="chip" id="nav-p" aria-pressed="true">تمرین</button>
       <button class="chip" id="nav-b" aria-pressed="false">بانک لغات</button>
-      <button class="chip" id="nav-m" aria-pressed="false">حفظ فوری</button>
+      <button class="chip" id="nav-m" aria-pressed="false">ملکه‌ی ذهن</button>
       <button class="chip" id="nav-a" aria-pressed="false">مرور خودکار</button>
       <button class="chip" id="nav-h" aria-pressed="false">تاریخچه</button>
       <button class="chip" id="nav-s" aria-pressed="false">تنظیمات</button>
@@ -523,7 +523,7 @@ function render(){
   if(S.view==="mm")return renderMM();
   renderPractice();
 }
-/* ===== حفظ فوری (Must Memorize) ===== */
+/* ===== ملکه‌ی ذهن (Second Nature, was «ملکه‌ی ذهن» / Must Memorize) ===== */
 function mmDig(t){return String(t).replace(/[۰-۹]/g,function(d){return "۰۱۲۳۴۵۶۷۸۹".indexOf(d)}).replace(/[٠-٩]/g,function(d){return "٠١٢٣٤٥٦٧٨٩".indexOf(d)})}
 function mmInts(){var a=mmDig(S.cfg.mmInt||"").split(/[,،\s]+/).map(Number).filter(function(n){return n>0&&n<400});return a.length?a:[1,2,4,7,30]}
 function mmItems(){return S.prog.mm.items}
@@ -539,11 +539,11 @@ function mmInfo(c,part){
   }
   return {en:String(en||"").trim(),fa:String(fa_||"").trim(),lab:lab,hd:qa.q||enText(c)}
 }
-function mkBtn(c,part){var on=!!mmFind(c.id+"|"+part);return '<button class="mk" type="button" data-mk="'+esc(part)+'" data-mc="'+esc(c.id)+'" aria-pressed="'+on+'" title="'+(on?"در «حفظ فوری» هست؛ برای برداشتن بزن":"افزودن به «حفظ فوری»")+'" aria-label="حفظ فوری">✓</button>'}
+function mkBtn(c,part){var on=!!mmFind(c.id+"|"+part);return '<button class="mk" type="button" data-mk="'+esc(part)+'" data-mc="'+esc(c.id)+'" aria-pressed="'+on+'" title="'+(on?"در «ملکه‌ی ذهن» هست؛ برای برداشتن بزن":"افزودن به «ملکه‌ی ذهن»")+'" aria-label="ملکه‌ی ذهن">✓</button>'}
 function mmToggle(cid,part){
   var k=cid+"|"+part,it=mmFind(k),c=byId(cid);if(!c)return;
-  if(it){S.prog.mm.items=mmItems().filter(function(x){return x!==it});note("از «حفظ فوری» برداشته شد.",true)}
-  else{var f=mmInfo(c,part);if(!f.en)return;mmItems().push({key:k,cid:cid,part:part,en:f.en,fa:f.fa,lab:f.lab,hd:f.hd,added:today(),step:0,due:today(),lapses:0,seen:0});note("به «حفظ فوری» اضافه شد.",true)}
+  if(it){S.prog.mm.items=mmItems().filter(function(x){return x!==it});note("از «ملکه‌ی ذهن» برداشته شد.",true)}
+  else{var f=mmInfo(c,part);if(!f.en)return;mmItems().push({key:k,cid:cid,part:part,en:f.en,fa:f.fa,lab:f.lab,hd:f.hd,added:today(),step:0,due:today(),lapses:0,seen:0});note("به «ملکه‌ی ذهن» اضافه شد.",true)}
   saveDoc("progress",S.prog);mmSync();
   [].forEach.call(document.querySelectorAll('.mk[data-mc="'+cid+'"][data-mk="'+part+'"]'),function(b){b.setAttribute("aria-pressed",!it)});
 }
@@ -553,11 +553,35 @@ function mmSync(){
   clearTimeout(S.mmT);
   S.mmT=setTimeout(function(){
     var src=S.cfg.sources[0];if(!src||!src.id||S.cfg.sheetSync===false)return;
-    var N=mmInts().length,rows=[["#","English","فارسی","بخش / مرجع","کارت مبدأ","تاریخ افزودن","مرحله","سررسید","وضعیت"]];
-    mmItems().forEach(function(it,i){var c=byId(it.cid);rows.push([i+1,mmCell(it.en),mmCell(it.fa),mmCell(it.lab),mmCell(it.hd||(c&&c.id)||""),it.added,it.step+"/"+N,it.due,it.step>=N?"حفظ‌شده":(it.step?"در حال یادگیری":"جدید")])});
-    var m=S.prog.mm,prev=m.n||0;while(rows.length<prev+1)rows.push(["","","","","","","","",""]);m.n=mmItems().length;
+    var N=mmInts().length,m=S.prog.mm,rows=[["#","English","فارسی","بخش / مرجع","کارت مبدأ","تاریخ افزودن","مرحله","سررسید","وضعیت","کلید | key","ورودی هاب خوانده‌شده | hub inbox read: "+(m.inboxN||0)]];
+    mmItems().forEach(function(it,i){var c=byId(it.cid);rows.push([i+1,mmCell(it.en),mmCell(it.fa),mmCell(it.lab),mmCell(it.hd||(c&&c.id)||""),it.added,it.step+"/"+N,it.due,it.step>=N?"حفظ‌شده":(it.step?"در حال یادگیری":"جدید"),mmCell(it.key),""])});
+    var prev=m.n||0;while(rows.length<prev+1)rows.push(["","","","","","","","","","",""]);m.n=mmItems().length;
     api("update",{id:src.id,tab:"Must Memorize",values:rows}).catch(function(){note("همگام‌سازی تب «Must Memorize» انجام نشد؛ بعداً دوباره تلاش می‌شود.")});
   },1500);
+}
+/* Hub inbox: the CELPIP hub appends rows (add / review) to this tab; they are applied here once, in order. */
+var MM_INBOX="Second Nature Inbox | ورودی ملکه‌ی ذهن";
+function mmNorm(t){return String(t||"").toLowerCase().replace(/[^a-z0-9']+/g," ").trim()}
+function mmInbox(){
+  var src=S.cfg.sources[0],m=S.prog.mm;if(!src||!src.id||S.mmInb)return;S.mmInb=1;
+  api("values",{id:src.id,tab:MM_INBOX,range:"A1:I5000"}).then(function(r){
+    S.mmInb=0;var v=(r&&r.values)||[],from=(m.inboxN||0)+1,ch=0,N=mmInts(),na=0;
+    if(r&&r.error)return;
+    for(var i=from;i<v.length;i++){
+      var x=v[i]||[],id=String(x[0]||""),d=/^\d{4}-\d{2}-\d{2}$/.test(x[1])?x[1]:today(),kind=String(x[3]||""),en=String(x[4]||"").trim();
+      if(!id||!en)continue;
+      var it=mmFind("hub|"+id)||mmFind(id);if(!it){var ne=mmNorm(en);it=mmItems().filter(function(y){return mmNorm(y.en)===ne})[0]||null}
+      if(/^add/.test(kind)){if(!it){mmItems().push({key:"hub|"+id,cid:"",part:"hub",en:en,fa:String(x[5]||"").trim(),lab:String(x[6]||"هاب").trim(),hd:"",added:d,step:0,due:d,lapses:0,seen:0});na++}}
+      else if(/^review/.test(kind)&&it){
+        it.seen=(it.seen||0)+1;
+        if(x[7]==="ok"){it.step=Math.min(N.length,it.step+1);it.due=addDays(d,it.step>=N.length?30:N[it.step-1])}
+        else{it.step=0;it.lapses=(it.lapses||0)+1;it.due=addDays(d,N[0])}
+      }
+      ch=1;
+    }
+    if(v.length-1>(m.inboxN||0)){m.inboxN=Math.max(0,v.length-1);ch=1}
+    if(ch){saveDoc("progress",S.prog);mmSync();if(na)note(fa(na)+" مورد تازه از هاب به «ملکه‌ی ذهن» آمد.",true);if(S.view==="mm"&&!(S.mmq&&S.mmq.on))renderMM()}
+  }).catch(function(){S.mmInb=0});
 }
 function mmDue(){var t=today();return mmItems().filter(function(x){return x.due<=t})}
 function mmStats(){var N=mmInts().length,a=mmItems();return {tot:a.length,due:mmDue().length,ms:a.filter(function(x){return x.step>=N}).length}}
@@ -569,14 +593,14 @@ function mmQueue(){
   return q;
 }
 function dotsH(it){var N=mmInts().length,h='<span class="dots'+(it.step>=N?' ms':'')+'" aria-label="مرحله '+it.step+'">';for(var i=0;i<N;i++)h+='<i'+(i<it.step?' class="on"':'')+'></i>';return h+'</span>'}
-function mmRowH(it){return '<div class="mmr"><div class="mt"><div class="en" dir="ltr">'+esc(it.en)+'</div>'+(it.fa?'<div class="fa" dir="rtl">'+esc(it.fa)+'</div>':'')+'<div class="muted" style="font-size:12px;margin-top:4px"><bdi dir="ltr">'+esc(it.lab)+'</bdi>'+dotsH(it)+' · سررسید '+esc(it.due)+'</div></div><button class="ib" data-mo="'+esc(it.key)+'" title="باز کردن کارت مبدأ">↗</button><button class="ib" data-mr="'+esc(it.key)+'" title="حذف">✕</button></div>'}
+function mmRowH(it){return '<div class="mmr"><div class="mt"><div class="en" dir="ltr">'+esc(it.en)+'</div>'+(it.fa?'<div class="fa" dir="rtl">'+esc(it.fa)+'</div>':'')+'<div class="muted" style="font-size:12px;margin-top:4px"><bdi dir="ltr">'+esc(it.lab)+'</bdi>'+dotsH(it)+' · سررسید '+esc(it.due)+'</div></div>'+(it.cid?'<button class="ib" data-mo="'+esc(it.key)+'" title="باز کردن کارت مبدأ">↗</button>':'')+'<button class="ib" data-mr="'+esc(it.key)+'" title="حذف">✕</button></div>'}
 function renderMM(){
   if(S.mmq&&S.mmq.on)return renderMMDrill();
   var st=mmStats(),h='';
-  h+='<div class="panel">'+secHead("🧠","حفظ فوری","جمله‌ها و مثال‌هایی که باید بی‌درنگ و بدون فکر بگویی");
+  h+='<div class="panel">'+secHead("🧠","ملکه‌ی ذهن","جمله‌ها و مثال‌هایی که باید بی‌درنگ و بدون فکر بگویی");
   h+='<div class="stats" style="grid-template-columns:repeat(3,1fr)"><div class="stat"><b>'+fa(st.tot)+'</b><span class="muted">کل</span></div><div class="stat"><b>'+fa(st.due)+'</b><span class="muted">سررسید</span></div><div class="stat"><b>'+fa(st.ms)+'</b><span class="muted">حفظ‌شده</span></div></div>';
   var q=mmQueue();
-  h+=q.length?'<button class="btn go hero" id="mmstart" style="width:100%">شروع تمرین · '+fa(q.length)+' مورد</button>':'<p class="muted">'+(st.tot?'امروز موردی برای مرور نیست.':'هنوز چیزی اضافه نکرده‌ای. روی هر کارت، کنار جمله، ساختار یا مثال، دکمه‌ی ✓ کوچک را بزن.')+'</p>';
+  h+=q.length?'<button class="btn go hero" id="mmstart" style="width:100%">شروع تمرین · '+fa(q.length)+' مورد</button>':'<p class="muted">'+(st.tot?'امروز موردی برای مرور نیست.':'هنوز چیزی اضافه نکرده‌ای. روی هر کارت، کنار جمله، ساختار یا مثال، دکمه‌ی ✓ کوچک را بزن، یا در هاب CELPIP دکمه‌ی 🧠 را.')+'</p>';
   h+='<p class="muted" style="font-size:12px;margin-top:8px">کلید ۱ = روان گفتم، کلید ۲ = لکنت داشتم یا یادم نبود. فاصله‌ها: '+esc(mmInts().join("، "))+' روز · سقف روزانه: '+fa(S.cfg.mmDaily)+'</p></div>';
   if(st.tot){h+='<div class="panel"><input type="search" id="mmf" placeholder="جست‌وجو در موارد" style="width:100%;margin-bottom:6px"><div id="mml"></div></div>'}
   app.innerHTML=h;
@@ -590,7 +614,7 @@ function renderMM(){
 function renderMMDrill(){
   var m=S.mmq,k=m.q[m.i],it=k&&mmFind(k),h='';
   if(!it){var fl=m.fl;S.mmq=null;h='<div class="panel" style="text-align:center"><h2>تمام شد 🎉</h2><p class="muted">'+fa(fl)+' مورد را روان گفتی.</p><p style="margin-top:12px"><button class="btn go" id="mmback">بازگشت</button></p></div>';app.innerHTML=h;document.getElementById("mmback").onclick=function(){renderMM()};return}
-  h+='<div class="tb"><button class="btn sm tbb" id="mmx">← LIST</button><button class="btn sm tbb" id="mmo">↗ CARD</button></div>';
+  h+='<div class="tb"><button class="btn sm tbb" id="mmx">← LIST</button>'+(it.cid?'<button class="btn sm tbb" id="mmo">↗ CARD</button>':'')+'</div>';
   h+='<div class="prog"><i style="width:'+Math.round(100*m.i/m.q.length)+'%"></i></div>';
   h+='<div class="panel card"><div class="ch"><span class="tag">'+esc(it.lab)+'</span><span class="tag box">'+fa(m.i+1)+' از '+fa(m.q.length)+'</span></div><div class="cb">';
   var pr=it.fa||it.hd;
@@ -600,7 +624,7 @@ function renderMMDrill(){
   h+=m.show?'<div class="ar"><button class="btn known" id="mmk">روان بود <span class="kb">1</span></button><button class="btn hard" id="mmh">لکنت / سخت <span class="kb">2</span></button></div>':'<button class="btn go" id="mmrev" style="width:100%">نمایش پاسخ <span class="kb">1 · 2</span></button>';
   app.innerHTML=h;
   document.getElementById("mmx").onclick=function(){S.mmq=null;renderMM()};
-  document.getElementById("mmo").onclick=function(){S.mmq=null;S.bankId=it.cid;S.bankShow=true;S.bankFrom="mm";go("bank")};
+  var mo=document.getElementById("mmo");if(mo)mo.onclick=function(){S.mmq=null;S.bankId=it.cid;S.bankShow=true;S.bankFrom="mm";go("bank")};
   var sp=document.getElementById("mmsp");if(sp)sp.onclick=function(){speak(it.en,true)};
   var rv=document.getElementById("mmrev");if(rv)rv.onclick=mmReveal;
   var kk=document.getElementById("mmk");if(kk)kk.onclick=function(){mmGrade(true)};
@@ -883,8 +907,8 @@ function renderPractice(){
   if(s&&s.date===t&&!finished&&S.idx===0&&!s.rep&&s.ids&&s.ids.length)h+='<p style="margin:12px 0 0"><button class="btn sm" id="rebuild">ساخت دوباره با تعداد جدید</button></p>';
   h+='</div>';
   var ms=mmStats();
-  h+='<div class="panel">'+secHead("🧠","حفظ فوری","جمله‌ها و مثال‌هایی که باید بی‌درنگ بگویی");
-  h+='<div class="stats" style="grid-template-columns:repeat(3,1fr);margin:0 0 12px"><div class="stat"><b>'+fa(ms.tot)+'</b><span class="muted">کل</span></div><div class="stat"><b>'+fa(ms.due)+'</b><span class="muted">سررسید</span></div><div class="stat"><b>'+fa(ms.ms)+'</b><span class="muted">حفظ‌شده</span></div></div><button class="btn" id="mmgo" style="width:100%">'+(ms.tot?'رفتن به حفظ فوری':'حفظ فوری · با ✓ روی کارت‌ها پر می‌شود')+'</button></div>';
+  h+='<div class="panel">'+secHead("🧠","ملکه‌ی ذهن","جمله‌ها و مثال‌هایی که باید بی‌درنگ بگویی");
+  h+='<div class="stats" style="grid-template-columns:repeat(3,1fr);margin:0 0 12px"><div class="stat"><b>'+fa(ms.tot)+'</b><span class="muted">کل</span></div><div class="stat"><b>'+fa(ms.due)+'</b><span class="muted">سررسید</span></div><div class="stat"><b>'+fa(ms.ms)+'</b><span class="muted">حفظ‌شده</span></div></div><button class="btn" id="mmgo" style="width:100%">'+(ms.tot?'رفتن به ملکه‌ی ذهن':'ملکه‌ی ذهن · با ✓ روی کارت‌ها پر می‌شود')+'</button></div>';
   /* 4 boxes */
   var bc=boxCounts(),mx=Math.max.apply(null,bc.concat([1])),days=[1,2,4,7,14];
   h+='<div class="panel">'+secHead("📦","جعبه‌های لایتنر","روی هر جعبه بزن تا کلماتش را ببینی");
@@ -921,7 +945,7 @@ function renderSetup(){
   var d=S.draft||(S.draft=JSON.parse(JSON.stringify(S.cfg))),h="";
   h+='<div class="panel"><h2>تعداد روزانه</h2><div class="grid2"><div><label class="f" for="np">تعداد کل کارت در روز</label><input type="number" id="np" min="1" max="200" value="'+S.cfg.perDay+'"></div><div><label class="f" for="rp">سقف کارت جدید در روز (۰ = بقیه‌ی تعداد کل با جدید پر شود)</label><input type="number" id="rp" min="0" max="200" value="'+S.cfg.maxNew+'"></div></div><div style="margin-top:12px"><label class="f" for="rd">تعداد دوره در روز (هر دوره یک بار مرور کامل کارت‌های امروز)</label><input type="number" id="rd" min="1" max="10" value="'+(S.cfg.rounds||1)+'"></div><div style="margin-top:12px"><label class="f" for="ad">مرور خودکار: چند روز اخیر (به‌علاوه‌ی امروز)</label><input type="number" id="ad" min="0" max="30" value="'+(S.cfg.autoDays==null?3:S.cfg.autoDays)+'"></div><p class="muted" style="margin-top:8px">اول کارت‌های مرورِ سررسیدشده می‌آیند و بقیه‌ی تعداد کل با کارت جدید پر می‌شود.</p>';
   h+='<label class="tabhead" style="margin-top:12px"><input type="checkbox" id="as"'+(S.cfg.autoSpeak?" checked":"")+'><span>پخش خودکار تلفظ</span></label><label class="tabhead" style="margin-top:8px"><input type="checkbox" id="ss"'+(S.cfg.sheetSync!==false?" checked":"")+'><span>ذخیره‌ی جعبه‌ها و تاریخچه در خود Google Sheet (تب‌های Leitner_Box و Leitner_Log)</span></label><p class="muted" style="margin-top:8px">تعداد با تغییر همین‌جا اعمال می‌شود و تمرین امروزِ شروع‌نشده دوباره ساخته می‌شود.</p></div>';
-  h+='<div class="panel"><h2>حفظ فوری</h2><div class="grid2"><div><label class="f" for="mmd">سقف مورد در روز</label><input type="number" id="mmd" min="1" max="200" value="'+S.cfg.mmDaily+'"></div><div><label class="f" for="mmi">فاصله‌ی مرورها به روز (با ویرگول)</label><input type="text" class="ltr" id="mmi" value="'+esc(S.cfg.mmInt)+'"></div></div><p class="muted" style="font-size:12px;margin-top:6px">بعد از آخرین فاصله، مورد «حفظ‌شده» می‌شود و ماهی یک بار مرور می‌شود.</p></div>';
+  h+='<div class="panel"><h2>ملکه‌ی ذهن</h2><div class="grid2"><div><label class="f" for="mmd">سقف مورد در روز</label><input type="number" id="mmd" min="1" max="200" value="'+S.cfg.mmDaily+'"></div><div><label class="f" for="mmi">فاصله‌ی مرورها به روز (با ویرگول)</label><input type="text" class="ltr" id="mmi" value="'+esc(S.cfg.mmInt)+'"></div></div><p class="muted" style="font-size:12px;margin-top:6px">بعد از آخرین فاصله، مورد «حفظ‌شده» می‌شود و ماهی یک بار مرور می‌شود.</p></div>';
   d.sources.forEach(function(s,i){
     h+='<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">'+esc(s.name||("منبع "+fa(i+1)))+'</h2><button class="btn sm" data-rm="'+i+'">حذف</button></div>';
     h+='<label class="f" for="in'+i+'" style="margin-top:8px">لینک یا شناسه‌ی Google Sheet</label><div class="row"><input type="text" class="ltr" id="in'+i+'" data-in="'+i+'" value="'+esc(s.input||"")+'" style="flex:1 1 200px"><button class="btn sm" data-ld="'+i+'">بارگذاری تب‌ها</button></div>';
@@ -1279,7 +1303,7 @@ document.getElementById("nav-h").onclick=function(){S.hist=null;go("hist")};
 
 function applyDocs(c,p,l){
   if(c)S.cfg={perDay:c.perDay!=null?c.perDay:10,maxNew:c.maxNew||0,rounds:c.rounds||1,autoDays:c.autoDays!=null?c.autoDays:3,reverse:!!c.reverse,speedLv:c.speedLv>=1&&c.speedLv<=4?c.speedLv:2,sheetSync:c.sheetSync!==false,autoSpeak:c.autoSpeak!==false,mmDaily:c.mmDaily>0?c.mmDaily:15,mmInt:c.mmInt||"1,2,4,7,30",freeAdded:c.freeAdded?1:0,sources:c.sources||[]};
-  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0,dx:p.dx||0,ff:p.ff||{},d0:p.d0||"",rt:p.rt||0,mm:{items:(p.mm&&p.mm.items)||[],day:(p.mm&&p.mm.day)||null,n:(p.mm&&p.mm.n)||0}};
+  if(p)S.prog={p:p.p||{},session:p.session||null,filter:p.filter||[],day:p.day||null,days:p.days||{},tt:p.tt||0,dx:p.dx||0,ff:p.ff||{},d0:p.d0||"",rt:p.rt||0,mm:{items:(p.mm&&p.mm.items)||[],day:(p.mm&&p.mm.day)||null,n:(p.mm&&p.mm.n)||0,inboxN:(p.mm&&p.mm.inboxN)||0}};
   if(l)S.logs[today()]=l;
 }
 /* Free CELPIP: tab for free practices (outside the Behjati course). Added once, with the same columns as «Behjati CELPIP», as its own category. */
@@ -1295,7 +1319,7 @@ function ensureFree(){
   });
   if(ch){S.cfg.freeAdded=1;saveDoc("config",S.cfg)}
 }
-function startCards(){ensureFree();if(S.cfg.sources.length){loadCards()}else{S.view="setup";S.phase="idle";render()}}
+function startCards(){ensureFree();if(S.cfg.sources.length){loadCards();mmInbox()}else{S.view="setup";S.phase="idle";render()}}
 function boot(){
   if(!S.conn)return;
   S.col={doc:mkDoc};S.docs.config=mkDoc("config");S.docs.progress=mkDoc("progress");
@@ -1308,7 +1332,7 @@ function boot(){
     var useC=newer(rc,lc),useP=newer(rp,lp),useL=newer(rl,ll);
     if(useC)lsSet("lt_doc_config",rc);if(useP)lsSet("lt_doc_progress",rp);if(useL)lsSet("lt_doc_"+ld,rl);
     if(!local){applyDocs(rc,rp,rl);S.phase="idle";startCards();return}
-    if((useC||useP||useL)&&!S.touched){applyDocs(useC?rc:null,useP?rp:null,useL?rl:null);if(useC)startCards();else render()}
+    if((useC||useP||useL)&&!S.touched){applyDocs(useC?rc:null,useP?rp:null,useL?rl:null);if(useC)startCards();else{render();if(useP)mmInbox()}}
   }).catch(function(e){
     if(local){note("به شیت وصل نشد؛ با نسخه‌ی ذخیره‌شده‌ی گوشی ادامه می‌دهی و بعداً همگام می‌شود.");return}
     S.phase="idle";app.innerHTML='<div class="panel"><h2>اتصال برقرار نشد</h2><p class="muted">'+esc(errText(e))+'</p><p style="margin-top:12px"><button class="btn go" id="rt">تلاش دوباره</button> <button class="btn sm" id="rc">تغییر اتصال</button></p></div>';
