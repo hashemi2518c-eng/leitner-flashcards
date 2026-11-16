@@ -127,6 +127,7 @@ svg.ic{width:18px;height:18px;flex:none}
 .mmr .ib{min-width:36px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--ink2);font-size:14px}
 .dots{display:inline-flex;gap:3px;margin-inline-start:6px;vertical-align:middle}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--acc)}.dots.ms i{background:var(--orange)}
 .mmbig{font-family:var(--font-en);font-size:24px;text-align:center;direction:ltr;line-height:1.5}
+.mmr .en,.mmr .fa,.mmbig,.q[dir=auto]{white-space:pre-line}
 </style>
 </head>
 <body>
@@ -571,6 +572,10 @@ function mmInbox(){
       var x=v[i]||[],id=String(x[0]||""),d=/^\d{4}-\d{2}-\d{2}$/.test(x[1])?x[1]:today(),kind=String(x[3]||""),en=String(x[4]||"").trim();
       if(!id||!en)continue;
       var it=mmFind("hub|"+id)||mmFind(id);if(!it){var ne=mmNorm(en);it=mmItems().filter(function(y){return mmNorm(y.en)===ne})[0]||null}
+      if(/^(extend|replace)/.test(kind)){var tg=mmFind("hub|"+id)||mmFind(id);if(tg){var ln=function(t){t=String(t||"").trim();return !t?[]:/^\s*1\)\s/.test(t)?t.split(/\n(?=\d+\)\s)/).map(function(z){return z.replace(/^\d+\)\s*/,"").trim()}):[t]},jn=function(a){return a.length<2?(a[0]||""):a.map(function(z,q){return (q+1)+") "+z}).join("\n")};
+          var E=ln(tg.en),F=ln(tg.fa);while(F.length<E.length)F.push("");var nf=String(x[5]||"").trim();
+          if(/^replace/.test(kind)){var q=Math.max(1,Math.min(E.length,+x[7]||1))-1;E[q]=en;F[q]=nf}else{E.push(en);F.push(nf)}
+          tg.en=jn(E);tg.fa=jn(F);tg.step=Math.max(0,(tg.step||0)-1);tg.due=d}ch=1;continue}
       if(/^add/.test(kind)){if(!it){mmItems().push({key:"hub|"+id,cid:"",part:"hub",en:en,fa:String(x[5]||"").trim(),lab:String(x[6]||"هاب").trim(),hd:"",added:d,step:0,due:d,lapses:0,seen:0});na++}}
       else if(/^review/.test(kind)&&it){
         it.seen=(it.seen||0)+1;
