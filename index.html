@@ -173,7 +173,7 @@ function saveDoc(name,data){
   S.pend=S.pend||{};S.run=S.run||{};S.touched=true;
   var o=JSON.parse(JSON.stringify(data));o.ts=Date.now();lsSet("lt_doc_"+name,o);S.pend[name]=o;
   if(S.run[name])return S.run[name];
-  function go(){var x=S.pend[name];if(x===undefined){delete S.run[name];return Promise.resolve()}delete S.pend[name];return d.set(x).catch(function(){note("ذخیره در شیت انجام نشد؛ نسخه‌ی گوشی نگه داشته شد و بعداً دوباره تلاش می‌شود.")}).then(go)}
+  function go(){var x=S.pend[name];if(x===undefined){delete S.run[name];return Promise.resolve()}delete S.pend[name];return d.set(x).then(function(){try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:"leitner-saved",doc:name,ts:x.ts},"*")}catch(e){}}).catch(function(){note("ذخیره در شیت انجام نشد؛ نسخه‌ی گوشی نگه داشته شد و بعداً دوباره تلاش می‌شود.")}).then(go)}
   return S.run[name]=go();
 }
 function nowHM(){return new Date().toTimeString().slice(0,5)}
